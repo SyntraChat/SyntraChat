@@ -7,7 +7,7 @@ SyntraChat cannot isolate against an administrator or a compromised WebView engi
 
 | Boundary / threat | Checkpoint control | Remaining validation |
 | --- | --- | --- |
-| Remote site calls native commands | No remote capability entries; only main window is trusted; caller-label checks; custom app command ACL | Runtime adversarial IPC/subframe tests |
+| Remote site calls native commands | No remote capability entries or window-wide grants; only main WebView label is trusted; caller-label checks; custom app command ACL | Runtime adversarial IPC/subframe tests |
 | Service navigates into trusted shell | Exact-origin HTTPS navigation allowlist; main disallows remote navigation | Engine redirects, tauri protocol and new-window tests |
 | Cross-account cookie/storage leak | OS data directory per backend UUID; no frontend-chosen paths | Two-profile cookie/IndexedDB and restart tests per OS |
 | Malicious custom URL | Rust HTTPS/no-userinfo validation, URL parser, max length | DNS changes/private network access are ordinary website behavior; no native HTTP proxy |

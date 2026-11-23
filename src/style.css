@@ -123,6 +123,20 @@ p {
   color: var(--on-accent);
   border-radius: 10px;
 }
+.rail button.service-tab.selected {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 10px;
+}
+.active-actions {
+  display: flex;
+  gap: 4px;
+}
+.active-actions button {
+  border: 0;
+  padding: 4px;
+  color: var(--muted);
+}
 .status-dot {
   position: absolute;
   right: 0;

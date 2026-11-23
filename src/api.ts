@@ -24,6 +24,7 @@ export interface Snapshot {
   settings: Settings;
   services: Service[];
   openAccounts: string[];
+  activeAccount: string | null;
   version: string;
   os: string;
   engine: string;
@@ -41,5 +42,8 @@ export const api = {
   open: (id: string) => invoke<void>("open_account", { id }),
   reload: (id: string) => invoke<void>("reload_account", { id }),
   close: (id: string) => invoke<void>("close_account", { id }),
+  home: () => invoke<void>("show_home"),
+  contentVisible: (visible: boolean) =>
+    invoke<void>("set_content_visible", { visible }),
   quit: () => invoke<void>("quit"),
 };

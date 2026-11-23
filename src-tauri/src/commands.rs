@@ -1,9 +1,9 @@
-use crate::{registry, settings};
+use crate::{registry, settings, views};
 use serde::Serialize;
 use settings::{Account, Settings, Store};
 use std::sync::{Mutex, MutexGuard};
-use tauri::webview::{NewWindowResponse, PermissionResponse};
-use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::webview::{NewWindowResponse, PermissionResponse, WebviewBuilder};
+use tauri::{AppHandle, Manager, State, Webview, WebviewUrl};
 use uuid::Uuid;
 
 pub struct AppState {
@@ -11,7 +11,7 @@ pub struct AppState {
 }
 type Result<T> = std::result::Result<T, String>;
 
-fn trusted(caller: &WebviewWindow) -> Result<()> {
+fn trusted(caller: &Webview) -> Result<()> {
     if caller.label() == "main" {
         Ok(())
     } else {
@@ -49,13 +49,14 @@ pub struct Snapshot {
     settings: Settings,
     services: Vec<registry::Service>,
     open_accounts: Vec<String>,
+    active_account: Option<Uuid>,
     version: &'static str,
     os: &'static str,
     engine: &'static str,
 }
 
 #[tauri::command]
-pub fn snapshot(caller: WebviewWindow, app: AppHandle, state: State<AppState>) -> Result<Snapshot> {
+pub fn snapshot(caller: Webview, app: AppHandle, state: State<AppState>) -> Result<Snapshot> {
     trusted(&caller)?;
     let settings = locked(&state)?
         .as_ref()
@@ -65,16 +66,18 @@ pub fn snapshot(caller: WebviewWindow, app: AppHandle, state: State<AppState>) -
     let open_accounts = settings
         .accounts
         .iter()
-        .filter(|a| {
-            app.get_webview_window(&format!("account-{}", a.id))
-                .is_some()
-        })
+        .filter(|a| app.get_webview(&format!("account-{}", a.id)).is_some())
         .map(|a| a.id.to_string())
         .collect();
     Ok(Snapshot {
         settings,
         services: registry::services(),
         open_accounts,
+        active_account: *app
+            .state::<views::Workspace>()
+            .active
+            .lock()
+            .map_err(|_| "Workspace lock failed")?,
         version: env!("CARGO_PKG_VERSION"),
         os: std::env::consts::OS,
         engine: if cfg!(target_os = "windows") {
@@ -89,7 +92,7 @@ pub fn snapshot(caller: WebviewWindow, app: AppHandle, state: State<AppState>) -
 
 #[tauri::command]
 pub fn add_account(
-    caller: WebviewWindow,
+    caller: Webview,
     state: State<AppState>,
     service_id: String,
     name: String,
@@ -121,7 +124,7 @@ pub fn add_account(
 
 #[tauri::command]
 pub fn edit_account(
-    caller: WebviewWindow,
+    caller: Webview,
     app: AppHandle,
     state: State<AppState>,
     id: Uuid,
@@ -140,26 +143,25 @@ pub fn edit_account(
         a.zoom = zoom;
         Ok(())
     })?;
-    if let Some(view) = app.get_webview_window(&format!("account-{id}")) {
+    if let Some(view) = app.get_webview(&format!("account-{id}")) {
         view.set_zoom(zoom).map_err(|e| e.to_string())?;
-        view.set_title(&format!("{} · SyntraChat", account(&state, id)?.name))
-            .map_err(|e| e.to_string())?;
     }
     Ok(())
 }
 
 #[tauri::command]
 pub fn remove_account(
-    caller: WebviewWindow,
+    caller: Webview,
     app: AppHandle,
     state: State<AppState>,
     id: Uuid,
 ) -> Result<()> {
     trusted(&caller)?;
     account(&state, id)?;
-    if let Some(view) = app.get_webview_window(&format!("account-{id}")) {
+    if let Some(view) = app.get_webview(&format!("account-{id}")) {
         view.close().map_err(|e| e.to_string())?;
     }
+    clear_active(&app, id)?;
     // Session data is deliberately retained; deletion needs an engine-shutdown-safe workflow.
     update(&state, |s| {
         s.accounts.retain(|a| a.id != id);
@@ -169,7 +171,7 @@ pub fn remove_account(
 
 #[tauri::command]
 pub fn set_appearance(
-    caller: WebviewWindow,
+    caller: Webview,
     state: State<AppState>,
     theme: String,
     accent: String,
@@ -184,52 +186,59 @@ pub fn set_appearance(
 
 #[tauri::command]
 pub async fn open_account(
-    caller: WebviewWindow,
+    caller: Webview,
     app: AppHandle,
     state: State<'_, AppState>,
     id: Uuid,
 ) -> Result<()> {
     trusted(&caller)?;
     let account = account(&state, id)?;
-    let window_label = format!("account-{id}");
-    if let Some(view) = app.get_webview_window(&window_label) {
-        view.show().map_err(|e| e.to_string())?;
-        return view.set_focus().map_err(|e| e.to_string());
-    }
     if cfg!(target_os = "macos") {
-        return Err("macOS profile isolation is not verified; account windows are unavailable on this platform".into());
+        return Err("macOS profile isolation is not verified".into());
     }
-    let home = registry::validate_url(&account.url)?;
-    let allowed = home.clone();
-    let profile = settings::profile_path(
-        &app.path().app_local_data_dir().map_err(|e| e.to_string())?,
-        id,
-    );
-    let view = WebviewWindowBuilder::new(&app, &window_label, WebviewUrl::External(home))
-        .title(format!("{} · SyntraChat", account.name))
-        .inner_size(1100.0, 780.0)
-        .data_directory(profile)
-        .on_navigation(move |target| registry::navigation_allowed(&allowed, target))
-        .on_new_window(|_, _| NewWindowResponse::Deny)
-        .on_permission_request(|_, _| PermissionResponse::Deny)
-        .on_download(|_, _| false)
-        .build()
+    let view_label = format!("account-{id}");
+    let window = app.get_window("main").ok_or("Main window unavailable")?;
+    if app.get_webview(&view_label).is_none() {
+        let home = registry::validate_url(&account.url)?;
+        let allowed = home.clone();
+        let profile = settings::profile_path(
+            &app.path().app_local_data_dir().map_err(|e| e.to_string())?,
+            id,
+        );
+        let rect = views::bounds(&window).map_err(|e| e.to_string())?;
+        let builder = WebviewBuilder::new(&view_label, WebviewUrl::External(home))
+            .data_directory(profile)
+            .on_navigation(move |target| registry::navigation_allowed(&allowed, target))
+            .on_new_window(|_, _| NewWindowResponse::Deny)
+            .on_permission_request(|_, _| PermissionResponse::Deny)
+            .on_download(|_, _| false);
+        let view = window
+            .add_child(builder, rect.position, rect.size)
+            .map_err(|e| e.to_string())?;
+        view.set_zoom(account.zoom).map_err(|e| e.to_string())?;
+    }
+    *app.state::<views::Workspace>()
+        .active
+        .lock()
+        .map_err(|_| "Workspace lock failed")? = Some(id);
+    views::set_visible(&app, true)?;
+    app.get_webview(&view_label)
+        .ok_or("Account view unavailable")?
+        .set_focus()
         .map_err(|e| e.to_string())?;
-    view.set_zoom(account.zoom).map_err(|e| e.to_string())?;
-    tracing::info!("Account window created");
     Ok(())
 }
 
 #[tauri::command]
 pub fn reload_account(
-    caller: WebviewWindow,
+    caller: Webview,
     app: AppHandle,
     state: State<AppState>,
     id: Uuid,
 ) -> Result<()> {
     trusted(&caller)?;
     account(&state, id)?;
-    app.get_webview_window(&format!("account-{id}"))
+    app.get_webview(&format!("account-{id}"))
         .ok_or("Open this account first")?
         .reload()
         .map_err(|e| e.to_string())
@@ -237,21 +246,50 @@ pub fn reload_account(
 
 #[tauri::command]
 pub fn close_account(
-    caller: WebviewWindow,
+    caller: Webview,
     app: AppHandle,
     state: State<AppState>,
     id: Uuid,
 ) -> Result<()> {
     trusted(&caller)?;
     account(&state, id)?;
-    if let Some(view) = app.get_webview_window(&format!("account-{id}")) {
+    if let Some(view) = app.get_webview(&format!("account-{id}")) {
         view.close().map_err(|e| e.to_string())?;
+    }
+    clear_active(&app, id)?;
+    Ok(())
+}
+
+fn clear_active(app: &AppHandle, id: Uuid) -> Result<()> {
+    let workspace = app.state::<views::Workspace>();
+    let mut active = workspace
+        .active
+        .lock()
+        .map_err(|_| "Workspace lock failed")?;
+    if *active == Some(id) {
+        *active = None;
     }
     Ok(())
 }
 
 #[tauri::command]
-pub fn quit(caller: WebviewWindow, app: AppHandle) -> Result<()> {
+pub fn show_home(caller: Webview, app: AppHandle) -> Result<()> {
+    trusted(&caller)?;
+    *app.state::<views::Workspace>()
+        .active
+        .lock()
+        .map_err(|_| "Workspace lock failed")? = None;
+    views::set_visible(&app, false)
+}
+
+#[tauri::command]
+pub fn set_content_visible(caller: Webview, app: AppHandle, visible: bool) -> Result<()> {
+    trusted(&caller)?;
+    views::set_visible(&app, visible)
+}
+
+#[tauri::command]
+pub fn quit(caller: Webview, app: AppHandle) -> Result<()> {
     trusted(&caller)?;
     app.exit(0);
     Ok(())

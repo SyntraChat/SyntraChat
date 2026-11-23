@@ -23,6 +23,8 @@ vi.mock("./api", () => ({
     reload: vi.fn(),
     close: vi.fn(),
     quit: vi.fn(),
+    home: vi.fn(),
+    contentVisible: vi.fn(),
   },
 }));
 const initial: Snapshot = {
@@ -50,12 +52,14 @@ const initial: Snapshot = {
     },
   ],
   openAccounts: [],
+  activeAccount: null,
   version: "0.1.0",
   os: "windows",
   engine: "WebView2",
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(api.contentVisible).mockResolvedValue(undefined);
   vi.mocked(api.snapshot).mockResolvedValue(structuredClone(initial));
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute("open", "");
@@ -141,5 +145,46 @@ describe("workspace", () => {
       rules: { "color-contrast": { enabled: false } },
     });
     expect(result.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+  });
+  it("shows an active account as an embedded tab and returns to local settings", async () => {
+    const active = structuredClone(initial);
+    active.activeAccount = "account-1";
+    active.openAccounts = ["account-1"];
+    vi.mocked(api.snapshot).mockResolvedValue(active);
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("button", { name: "Reload active account" });
+    expect(screen.queryByRole("button", { name: "Open account" })).toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "Open Discord Personal" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    await user.click(
+      screen.getByRole("button", { name: "Reload active account" }),
+    );
+    expect(api.reload).toHaveBeenCalledWith("account-1");
+    vi.mocked(api.snapshot).mockResolvedValue(initial);
+    await user.click(
+      screen.getByRole("button", { name: "Appearance settings" }),
+    );
+    await screen.findByRole("heading", { name: "Appearance" });
+    expect(api.home).toHaveBeenCalled();
+  });
+  it("hides native content while a local dialog is open and restores it after closing", async () => {
+    const active = structuredClone(initial);
+    active.activeAccount = "account-1";
+    vi.mocked(api.snapshot).mockResolvedValue(active);
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("button", { name: "Reload active account" });
+    await user.click(screen.getByRole("button", { name: "Add account" }));
+    await waitFor(() =>
+      expect(api.contentVisible).toHaveBeenLastCalledWith(false),
+    );
+    await user.click(screen.getByRole("button", { name: "Close dialog" }));
+    await waitFor(() =>
+      expect(api.contentVisible).toHaveBeenLastCalledWith(true),
+    );
   });
 });

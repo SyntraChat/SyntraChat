@@ -1,5 +1,5 @@
 import { Info, Layers, Plus, Settings2 } from "lucide-react";
-import { api, type Snapshot } from "../api";
+import { type Snapshot } from "../api";
 export type Page = "accounts" | "appearance" | "diagnostics";
 
 type Props = {
@@ -9,6 +9,7 @@ type Props = {
   setPage: (p: Page) => void;
   setAdding: (v: boolean) => void;
   run: (operation: () => Promise<void>) => Promise<void>;
+  openAccount: (id: string) => Promise<void>;
 };
 export function Navigation({
   data,
@@ -17,11 +18,14 @@ export function Navigation({
   setPage,
   setAdding,
   run,
+  openAccount,
 }: Props) {
   return (
     <aside className="rail" aria-label="Primary navigation">
       <button
-        className={page === "accounts" ? "selected" : ""}
+        className={
+          page === "accounts" && !data?.activeAccount ? "selected" : ""
+        }
         aria-label="Accounts"
         title="Accounts"
         onClick={() => setPage("accounts")}
@@ -32,15 +36,16 @@ export function Navigation({
         {data?.settings.accounts.map((account) => (
           <button
             key={account.id}
-            className="service-tab"
+            className={`service-tab ${data.activeAccount === account.id ? "selected" : ""}`}
+            aria-pressed={data.activeAccount === account.id}
             title={account.name}
             aria-label={`Open ${account.name}`}
             disabled={busy}
-            onClick={() => void run(() => api.open(account.id))}
+            onClick={() => void run(() => openAccount(account.id))}
           >
             {account.name.slice(0, 1).toUpperCase()}
             {data.openAccounts.includes(account.id) && (
-              <span className="status-dot" title="Window open" />
+              <span className="status-dot" title="Loaded" />
             )}
           </button>
         ))}

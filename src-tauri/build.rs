@@ -10,6 +10,8 @@ fn main() {
             "reload_account",
             "close_account",
             "quit",
+            "show_home",
+            "set_content_visible",
         ]),
     ))
     .expect("Tauri build configuration failed");

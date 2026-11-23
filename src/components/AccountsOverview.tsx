@@ -9,6 +9,7 @@ type Props = {
   setEditing: (a: Account) => void;
   setRemoving: (a: Account) => void;
   run: (operation: () => Promise<void>) => Promise<void>;
+  openAccount: (id: string) => Promise<void>;
 };
 export function AccountsOverview({
   data,
@@ -17,6 +18,7 @@ export function AccountsOverview({
   setEditing,
   setRemoving,
   run,
+  openAccount,
 }: Props) {
   const [query, setQuery] = useState("");
   const accounts = data?.settings.accounts ?? [];
@@ -59,13 +61,13 @@ export function AccountsOverview({
                     : data?.services.find(
                         (service) => service.id === account.serviceId,
                       )?.name}
-                  {open ? " · Window open" : ""}
+                  {open ? " · Loaded" : ""}
                 </small>
               </div>
               <button
                 className="open-account"
                 disabled={busy}
-                onClick={() => void run(() => api.open(account.id))}
+                onClick={() => void run(() => openAccount(account.id))}
               >
                 Open account <ArrowUpRight size={14} />
               </button>
@@ -92,7 +94,7 @@ export function AccountsOverview({
                         disabled={busy}
                         onClick={() => void run(() => api.close(account.id))}
                       >
-                        Close window
+                        Close tab
                       </button>
                     </>
                   )}
@@ -115,8 +117,7 @@ export function AccountsOverview({
         <p role="status">No accounts match “{query}”.</p>
       )}
       <p className="preview-note">
-        Preview: accounts open in separate windows. Embedded tabs, calls and
-        downloads are not available yet.
+        Preview: calls and downloads are not available yet.
       </p>
     </>
   );

@@ -5,7 +5,7 @@ import { AccountForm, Modal, Palette } from "./components/AccountDialogs";
 import { useCallback, useEffect, useState } from "react";
 import { api, type Account, type Snapshot } from "./api";
 import { textOnAccent } from "./appearance";
-import { Search } from "lucide-react";
+import { Search, RefreshCw, X } from "lucide-react";
 
 export function App() {
   const [data, setData] = useState<Snapshot>();
@@ -17,6 +17,16 @@ export function App() {
   const [removing, setRemoving] = useState<Account>();
   const [palette, setPalette] = useState(false);
   const refresh = useCallback(async () => setData(await api.snapshot()), []);
+  const openAccount = useCallback(async (id: string) => {
+    await api.open(id);
+    setPage("accounts");
+  }, []);
+  const navigate = (next: Page) => {
+    void run(async () => {
+      await api.home();
+      setPage(next);
+    });
+  };
   const run = useCallback(
     async (operation: () => Promise<void>) => {
       setBusy(true);
@@ -73,13 +83,22 @@ export function App() {
   }, []);
 
   const accounts = data?.settings.accounts ?? [];
+  const active = accounts.find((account) => account.id === data?.activeAccount);
+  const overlayOpen = adding || !!editing || !!removing || palette;
+  useEffect(() => {
+    if (!data) return;
+    void api
+      .contentVisible(!overlayOpen && !error)
+      .catch((e) => setError(String(e)));
+  }, [overlayOpen, error, data?.activeAccount]);
   return (
     <div className="app-shell">
       <Navigation
         data={data}
         busy={busy}
         page={page}
-        setPage={setPage}
+        setPage={navigate}
+        openAccount={openAccount}
         setAdding={setAdding}
         run={run}
       />
@@ -87,12 +106,34 @@ export function App() {
         <header>
           <span className="app-title">SyntraChat</span>
           <span className="page-name">
-            {page === "accounts"
-              ? "Accounts"
-              : page === "appearance"
-                ? "Appearance"
-                : "Diagnostics"}
+            {active
+              ? active.name
+              : page === "accounts"
+                ? "Accounts"
+                : page === "appearance"
+                  ? "Appearance"
+                  : "Diagnostics"}
           </span>
+          {active && (
+            <div className="active-actions">
+              <button
+                aria-label="Reload active account"
+                title="Reload"
+                disabled={busy}
+                onClick={() => void run(() => api.reload(active.id))}
+              >
+                <RefreshCw size={15} />
+              </button>
+              <button
+                aria-label="Close active account"
+                title="Close account tab"
+                disabled={busy}
+                onClick={() => void run(() => api.close(active.id))}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
           <button
             className="quick-switch"
             aria-label="Quick switch"
@@ -112,7 +153,7 @@ export function App() {
             </div>
           )}
           {!data && !error && <p role="status">Loading your workspace…</p>}
-          {page === "accounts" && (
+          {page === "accounts" && !active && (
             <AccountsOverview
               data={data}
               busy={busy}
@@ -120,6 +161,7 @@ export function App() {
               setEditing={setEditing}
               setRemoving={setRemoving}
               run={run}
+              openAccount={openAccount}
             />
           )}
           {page === "appearance" && data && (
@@ -162,7 +204,7 @@ export function App() {
         >
           <p>
             Remove <strong>{removing.name}</strong> from this workspace and
-            close its window?
+            close its tab?
           </p>
           <p>
             The local login profile will be retained. Session deletion is not
@@ -193,11 +235,11 @@ export function App() {
             busy={busy}
             choose={(a) => {
               setPalette(false);
-              void run(() => api.open(a.id));
+              void run(() => openAccount(a.id));
             }}
             appearance={() => {
               setPalette(false);
-              setPage("appearance");
+              navigate("appearance");
             }}
             add={() => {
               setPalette(false);

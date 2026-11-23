@@ -1,11 +1,15 @@
 use serde_json::Value;
 
 #[test]
-fn only_local_main_window_receives_explicit_command_permissions() {
+fn only_local_shell_webview_receives_explicit_command_permissions() {
     let capability: Value =
         serde_json::from_str(include_str!("../capabilities/shell.json")).unwrap();
     assert_eq!(capability["local"], true);
-    assert_eq!(capability["windows"], serde_json::json!(["main"]));
+    assert_eq!(capability["webviews"], serde_json::json!(["main"]));
+    assert!(
+        capability.get("windows").is_none(),
+        "A window grant would include remote children"
+    );
     assert!(capability.get("remote").is_none());
     for permission in capability["permissions"].as_array().unwrap() {
         let permission = permission.as_str().unwrap();

@@ -5,11 +5,11 @@ TypeScript/React**. Windows and Linux are the primary targets. No Electron runti
 bundled Chromium or background HTTP server.
 
 **0.1.0 foundation preview — not a stable release.** The Windows application builds and
-has been smoke-tested. Accounts currently open in separate native windows. Logged-in
+has been smoke-tested. Accounts open as native child WebViews in the main window. Logged-in
 messaging, persistent login isolation, Linux runtime behavior, voice, media, tray,
-notifications, embedded tabs and installation/update lifecycle are not certified.
+notifications and installation/update lifecycle are not certified.
 
-Implemented: validated service/custom HTTPS accounts, UUID profiles, lazy opening,
+Implemented: validated service/custom HTTPS accounts, UUID profiles, embedded account tabs, lazy opening,
 focus/reload/close, rename/zoom, removal with confirmation (retains session), atomic
 metadata persistence, five themes, custom accent, account search, Ctrl+K quick switcher,
 diagnostics and a real Quit action. Remote pages receive no privileged capabilities.

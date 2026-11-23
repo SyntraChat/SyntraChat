@@ -75,10 +75,10 @@ export function Diagnostics({
         <dd>{data.engine} (runtime version not measured)</dd>
         <dt>Saved accounts</dt>
         <dd>{accounts.length}</dd>
-        <dt>Open native views</dt>
+        <dt>Loaded account tabs</dt>
         <dd>{data.openAccounts.length}</dd>
         <dt>Automatic suspension</dt>
-        <dd>Unavailable; close a window explicitly after ending calls</dd>
+        <dd>Unavailable; close an account tab explicitly</dd>
         <dt>Telemetry</dt>
         <dd>None from SyntraChat; service privacy policies apply</dd>
       </dl>
