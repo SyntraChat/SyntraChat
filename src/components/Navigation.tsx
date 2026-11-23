@@ -1,20 +1,13 @@
-import {
-  ArrowUpRight,
-  Layers,
-  Plus,
-  Search,
-  Settings2,
-  ShieldCheck,
-} from "lucide-react";
+import { Info, Layers, Plus, Settings2 } from "lucide-react";
 import { api, type Snapshot } from "../api";
 export type Page = "accounts" | "appearance" | "diagnostics";
+
 type Props = {
   data?: Snapshot;
   busy: boolean;
   page: Page;
   setPage: (p: Page) => void;
   setAdding: (v: boolean) => void;
-  setPalette: (v: boolean) => void;
   run: (operation: () => Promise<void>) => Promise<void>;
 };
 export function Navigation({
@@ -23,98 +16,61 @@ export function Navigation({
   page,
   setPage,
   setAdding,
-  setPalette,
   run,
 }: Props) {
-  const accounts = data?.settings.accounts ?? [];
   return (
-    <>
-      {" "}
-      <aside className="rail" aria-label="Primary navigation">
-        <div className="brand-mark" aria-label="SyntraChat">
-          s<span>·</span>
-        </div>
-        <button
-          className={page === "accounts" ? "selected" : ""}
-          aria-label="Accounts"
-          onClick={() => setPage("accounts")}
-        >
-          <Layers size={21} />
-        </button>
-        <button
-          aria-label="Add account"
-          onClick={() => setAdding(true)}
-          disabled={!data}
-        >
-          <Plus size={21} />
-        </button>
-        <div className="rail-bottom">
+    <aside className="rail" aria-label="Primary navigation">
+      <button
+        className={page === "accounts" ? "selected" : ""}
+        aria-label="Accounts"
+        title="Accounts"
+        onClick={() => setPage("accounts")}
+      >
+        <Layers size={19} />
+      </button>
+      <nav className="rail-accounts" aria-label="Saved accounts">
+        {data?.settings.accounts.map((account) => (
           <button
-            aria-label="Appearance settings"
-            onClick={() => setPage("appearance")}
+            key={account.id}
+            className="service-tab"
+            title={account.name}
+            aria-label={`Open ${account.name}`}
+            disabled={busy}
+            onClick={() => void run(() => api.open(account.id))}
           >
-            <Settings2 size={21} />
+            {account.name.slice(0, 1).toUpperCase()}
+            {data.openAccounts.includes(account.id) && (
+              <span className="status-dot" title="Window open" />
+            )}
           </button>
-        </div>
-      </aside>
-      <aside className="sidebar">
-        <div className="wordmark">
-          SyntraChat <span>PREVIEW</span>
-        </div>
-        <div className="workspace-label">YOUR WORKSPACE</div>
-        <button className="workspace" onClick={() => setPage("accounts")}>
-          <span className="workspace-icon">P</span>
-          <span>
-            Personal<small>{accounts.length} accounts</small>
-          </span>
-          <Layers size={16} />
-        </button>
-        <button className="search-shortcut" onClick={() => setPalette(true)}>
-          <Search size={16} /> Quick switch <kbd>Ctrl K</kbd>
-        </button>
-        <div className="sidebar-heading">
-          ACCOUNTS{" "}
-          <button
-            aria-label="Add another account"
-            onClick={() => setAdding(true)}
-            disabled={!data}
-          >
-            <Plus size={16} />
-          </button>
-        </div>
-        <nav className="account-list" aria-label="Saved accounts">
-          {accounts.map((a) => (
-            <button
-              key={a.id}
-              onClick={() => void run(() => api.open(a.id))}
-              disabled={busy}
-            >
-              <span className="mini-avatar">
-                {a.name.slice(0, 1).toUpperCase()}
-              </span>
-              <span>
-                {a.name}
-                <small>{a.serviceId}</small>
-              </span>
-              {data?.openAccounts.includes(a.id) && (
-                <span className="status-dot" title="Window open" />
-              )}
-            </button>
-          ))}
-        </nav>
-        <div className="privacy-note">
-          <ShieldCheck size={17} />
-          <span>
-            Your accounts. Your device.<small>No SyntraChat telemetry.</small>
-          </span>
-        </div>
+        ))}
+      </nav>
+      <button
+        aria-label="Add account"
+        title="Add account"
+        onClick={() => setAdding(true)}
+        disabled={!data}
+      >
+        <Plus size={20} />
+      </button>
+      <div className="rail-bottom">
         <button
-          className="diagnostics-link"
+          className={page === "appearance" ? "selected" : ""}
+          aria-label="Appearance settings"
+          title="Settings"
+          onClick={() => setPage("appearance")}
+        >
+          <Settings2 size={19} />
+        </button>
+        <button
+          className={page === "diagnostics" ? "selected" : ""}
+          aria-label="Diagnostics and about"
+          title="About"
           onClick={() => setPage("diagnostics")}
         >
-          Diagnostics & about <ArrowUpRight size={14} />
+          <Info size={18} />
         </button>
-      </aside>
-    </>
+      </div>
+    </aside>
   );
 }

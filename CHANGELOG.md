@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Simplified the interface to one slim service rail, a compact toolbar and account rows;
+  moved secondary actions into an account menu and removed the dashboard cards/banners.
 - Audited Ybochat at a recorded source revision and documented license discrepancies.
 - Added independently authored Rust/Tauri client and strict React frontend.
 - Added validated accounts, native windows, profile directories, atomic settings, themes,

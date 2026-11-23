@@ -104,6 +104,7 @@ describe("workspace", () => {
     const user = userEvent.setup();
     render(<App />);
     await screen.findByRole("heading", { name: "Discord Personal" });
+    await user.click(screen.getByLabelText("Options for Discord Personal"));
     await user.click(screen.getByRole("button", { name: "Remove" }));
     expect(api.remove).not.toHaveBeenCalled();
     await user.click(

@@ -5,6 +5,7 @@ import { AccountForm, Modal, Palette } from "./components/AccountDialogs";
 import { useCallback, useEffect, useState } from "react";
 import { api, type Account, type Snapshot } from "./api";
 import { textOnAccent } from "./appearance";
+import { Search } from "lucide-react";
 
 export function App() {
   const [data, setData] = useState<Snapshot>();
@@ -80,23 +81,27 @@ export function App() {
         page={page}
         setPage={setPage}
         setAdding={setAdding}
-        setPalette={setPalette}
         run={run}
       />
       <main>
         <header>
-          <span>
-            <span className="breadcrumb">Personal</span>
-            <span className="slash">/</span>
+          <span className="app-title">SyntraChat</span>
+          <span className="page-name">
             {page === "accounts"
-              ? "Overview"
+              ? "Accounts"
               : page === "appearance"
                 ? "Appearance"
                 : "Diagnostics"}
           </span>
-          <span className="local-badge">
-            <span className="status-dot" /> LOCAL WORKSPACE
-          </span>
+          <button
+            className="quick-switch"
+            aria-label="Quick switch"
+            title="Quick switch (Ctrl+K)"
+            onClick={() => setPalette(true)}
+          >
+            <Search size={15} />
+            <kbd>Ctrl K</kbd>
+          </button>
         </header>
         <div className="content">
           {error && (

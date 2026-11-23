@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ArrowUpRight, Plus, Search, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, MoreHorizontal, Plus, Search } from "lucide-react";
 import { api, type Account, type Snapshot } from "../api";
+
 type Props = {
   data?: Snapshot;
   busy: boolean;
@@ -20,129 +21,103 @@ export function AccountsOverview({
   const [query, setQuery] = useState("");
   const accounts = data?.settings.accounts ?? [];
   const filtered = accounts.filter((a) =>
-    (a.name + " " + a.serviceId).toLowerCase().includes(query.toLowerCase()),
+    `${a.name} ${a.serviceId}`.toLowerCase().includes(query.toLowerCase()),
   );
   return (
     <>
-      <div className="eyebrow">A LITTLE LESS SCATTERED.</div>
-      <div className="page-title">
-        <div>
-          <h1>
-            All your conversations.
-            <br />
-            <span>One place to begin.</span>
-          </h1>
-          <p>
-            Separate accounts. A calmer workspace. Pick up where you left off.
-          </p>
-        </div>
+      <div className="account-toolbar">
+        <label className="filter">
+          <Search size={15} />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Find an account"
+            aria-label="Find an account"
+          />
+        </label>
         <button
           className="primary"
           onClick={() => setAdding(true)}
           disabled={!data}
         >
-          <Plus size={17} /> Add account
+          <Plus size={15} /> Add account
         </button>
       </div>
-      <div className="checkpoint">
-        <ShieldCheck size={20} />
-        <div>
-          <strong>Native account windows · Foundation preview</strong>
-          <p>
-            Accounts open in separate OS WebViews with individual profiles.
-            Messaging compatibility is experimental. Calls, downloads,
-            notifications and embedded tabs are not available yet.
-          </p>
-        </div>
-      </div>
-      <div className="section-title">
-        <h2>
-          Your accounts{" "}
-          <span>{accounts.length.toString().padStart(2, "0")}</span>
-        </h2>
-        <label className="filter">
-          <Search size={16} />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Find an account"
-            aria-label="Find an account"
-          />
-        </label>
-      </div>
-      <div className="cards">
-        {filtered.map((a) => (
-          <article className="account-card" key={a.id}>
-            <div className="card-top">
-              <span className="avatar">{a.name.slice(0, 1).toUpperCase()}</span>
-              <span className="account-state">
-                {data?.openAccounts.includes(a.id)
-                  ? "WINDOW OPEN"
-                  : "NOT LOADED"}
+      <div className="account-list">
+        {filtered.map((account) => {
+          const open = data?.openAccounts.includes(account.id);
+          return (
+            <article className="account-row" key={account.id}>
+              <span className="account-icon" aria-hidden="true">
+                {account.name.slice(0, 1).toUpperCase()}
               </span>
-            </div>
-            <h3>{a.name}</h3>
-            <p className="service-name">
-              {a.serviceId === "custom"
-                ? new URL(a.url).hostname
-                : data?.services.find((s) => s.id === a.serviceId)?.name}
-            </p>
-            <div className="card-meta">
-              <ShieldCheck size={13} /> Separate profile{" "}
-              <span>{Math.round(a.zoom * 100)}%</span>
-            </div>
-            <button
-              className="open-account"
-              disabled={busy}
-              onClick={() => void run(() => api.open(a.id))}
-            >
-              Open account <ArrowUpRight size={17} />
-            </button>
-            <div className="card-actions">
-              <button disabled={busy} onClick={() => setEditing(a)}>
-                Edit
+              <div className="account-label">
+                <h2>{account.name}</h2>
+                <small>
+                  {account.serviceId === "custom"
+                    ? new URL(account.url).hostname
+                    : data?.services.find(
+                        (service) => service.id === account.serviceId,
+                      )?.name}
+                  {open ? " · Window open" : ""}
+                </small>
+              </div>
+              <button
+                className="open-account"
+                disabled={busy}
+                onClick={() => void run(() => api.open(account.id))}
+              >
+                Open account <ArrowUpRight size={14} />
               </button>
-              {data?.openAccounts.includes(a.id) && (
-                <>
-                  <button
-                    disabled={busy}
-                    onClick={() => void run(() => api.reload(a.id))}
-                  >
-                    Reload
+              <details className="account-options">
+                <summary
+                  aria-label={`Options for ${account.name}`}
+                  title="Account options"
+                >
+                  <MoreHorizontal size={18} />
+                </summary>
+                <div className="account-menu">
+                  <button disabled={busy} onClick={() => setEditing(account)}>
+                    Edit
                   </button>
-                  <button
-                    disabled={busy}
-                    onClick={() => void run(() => api.close(a.id))}
-                  >
-                    Close window
+                  {open && (
+                    <>
+                      <button
+                        disabled={busy}
+                        onClick={() => void run(() => api.reload(account.id))}
+                      >
+                        Reload
+                      </button>
+                      <button
+                        disabled={busy}
+                        onClick={() => void run(() => api.close(account.id))}
+                      >
+                        Close window
+                      </button>
+                    </>
+                  )}
+                  <button disabled={busy} onClick={() => setRemoving(account)}>
+                    Remove
                   </button>
-                </>
-              )}
-              <button disabled={busy} onClick={() => setRemoving(a)}>
-                Remove
-              </button>
-            </div>
-          </article>
-        ))}
-        <button
-          className="add-card"
-          disabled={!data}
-          onClick={() => setAdding(true)}
-        >
-          <span>
-            <Plus size={23} />
-          </span>
-          <strong>Make room for another</strong>
-          <small>Add a service or a custom website</small>
-        </button>
+                </div>
+              </details>
+            </article>
+          );
+        })}
       </div>
+      {!accounts.length && (
+        <div className="empty-state">
+          <h1>Add your first account</h1>
+          <p>Choose a service using the + button.</p>
+        </div>
+      )}
       {query && !filtered.length && (
         <p role="status">No accounts match “{query}”.</p>
       )}
-      <footer>
-        <ShieldCheck size={15} /> Login sessions stay in the operating system’s
-        WebView storage.<span>Built with Rust + Tauri 2</span>
-      </footer>
+      <p className="preview-note">
+        Preview: accounts open in separate windows. Embedded tabs, calls and
+        downloads are not available yet.
+      </p>
     </>
   );
 }

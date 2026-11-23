@@ -8,9 +8,7 @@ type Props = {
 export function Appearance({ data, busy, run }: Props) {
   return (
     <>
-      <div className="eyebrow">MAKE IT YOURS</div>
       <h1>Appearance</h1>
-      <p>Saved on this device after every change.</p>
       <section className="settings-panel">
         <h2>Color theme</h2>
         <div className="theme-options">
@@ -63,7 +61,6 @@ export function Diagnostics({
   const accounts = data.settings.accounts;
   return (
     <>
-      <div className="eyebrow">ON THIS DEVICE</div>
       <h1>Diagnostics</h1>
       <p>
         Measured state only. Memory and startup benchmarks have not been
