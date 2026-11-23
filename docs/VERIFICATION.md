@@ -5,7 +5,8 @@ Tauri 2.12.7 / CLI 2.12.6. This record describes local checks, not remote CI res
 
 - `npm run typecheck`: passed.
 - `npm run lint`: passed.
-- `npm test`: five component/security-boundary interaction tests passed. Native commands
+- `npm test`: five component/security-boundary interaction tests plus one custom-accent
+  contrast test passed. Native commands
   mocked only in tests; these do not certify real WebView behavior.
 - axe structural accessibility: passed; color-contrast omitted because jsdom has no layout.
 - `npm run build`: passed; production frontend bundled successfully.
@@ -14,6 +15,8 @@ Tauri 2.12.7 / CLI 2.12.6. This record describes local checks, not remote CI res
 - `cargo test`: six validation/persistence/profile-path tests and one capability/profile-identity regression test passed.
 - `npm run tauri -- build --debug --no-bundle`: built a runnable Windows executable.
 - npm dependency installation audit: zero known reported vulnerabilities at install time.
+- Rust dependency audits completed: installer clean; client has six upstream warnings,
+  including a Linux GLib soundness advisory. See DEPENDENCY_AUDIT.md for release risks.
 - Separate installer: seven signature/integrity/metadata/path tests and Clippy passed.
 
 Native Windows smoke test via Computer Use: launch embedded frontend, add a development

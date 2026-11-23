@@ -26,10 +26,10 @@ prerequisites. [Development](docs/DEVELOPMENT.md) · [Building](docs/BUILDING.md
 [Reference audit](docs/YBOCHAT_FEATURE_AUDIT.md) · [Architecture](docs/ARCHITECTURE.md) ·
 [Threat model](docs/THREAT_MODEL.md) · [Milestones](docs/MIGRATION_PLAN.md).
 
-Exactly three primary repositories: this client (existing remote name
-SyntraChat-Desktop-Tauri), [installer](https://github.com/SyntraChat/SyntraChat-Installer),
+Exactly three primary repositories: this client,
+[installer](https://github.com/SyntraChat/SyntraChat-Installer),
 and [community](https://github.com/SyntraChat/.github). Each has independent Git history.
-See [publishing](docs/PUBLISHING.md) for the intended client rename and push commands.
+See [publishing](docs/PUBLISHING.md) for repository and push details.
 
 The Ybochat checkout is a read-only functional reference, outside the product repositories.
 No Electron code, assets, credentials or session stores are imported. MIT; upstream license
