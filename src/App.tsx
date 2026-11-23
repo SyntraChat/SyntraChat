@@ -4,6 +4,7 @@ import { Appearance, Diagnostics } from "./components/Preferences";
 import { AccountForm, Modal, Palette } from "./components/AccountDialogs";
 import { useCallback, useEffect, useState } from "react";
 import { api, type Account, type Snapshot } from "./api";
+import { textOnAccent } from "./appearance";
 
 export function App() {
   const [data, setData] = useState<Snapshot>();
@@ -47,6 +48,10 @@ export function App() {
     document.documentElement.style.setProperty(
       "--accent",
       data.settings.accent,
+    );
+    document.documentElement.style.setProperty(
+      "--on-accent",
+      textOnAccent(data.settings.accent),
     );
   }, [data]);
   useEffect(() => {

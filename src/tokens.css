@@ -1,6 +1,7 @@
 :root {
   color-scheme: dark;
   --accent: #a78bfa;
+  --on-accent: #000000;
   --bg: #141419;
   --panel: #1a1a21;
   --rail: #101014;

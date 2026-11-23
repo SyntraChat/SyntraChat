@@ -345,7 +345,7 @@ p {
 }
 .primary {
   background: var(--accent);
-  color: #171022;
+  color: var(--on-accent);
   border: 0;
   font-weight: 650;
   font-size: 12px;
