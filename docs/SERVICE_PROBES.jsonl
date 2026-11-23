@@ -1,0 +1,16 @@
+{"date":"2026-11-23","method":"HEAD, redirects followed, 15s timeout","url":"https://discord.com/app","status":200,"final":"https://discord.com/app"}
+{"url":"https://web.telegram.org/k/","error":"15-second timeout"}
+{"url":"https://web.telegram.org/a/","status":200,"final":"https://web.telegram.org/a/"}
+{"url":"https://web.whatsapp.com/","status":200,"final":"https://web.whatsapp.com/login/"}
+{"url":"https://app.slack.com/","status":200,"final":"https://app.slack.com/"}
+{"url":"https://steamcommunity.com/chat/","status":404}
+{"url":"https://app.cinny.in/","status":200,"final":"https://app.cinny.in/"}
+{"url":"https://app.element.io/","status":200,"final":"https://app.element.io/"}
+{"url":"https://stoat.chat/app","status":200,"final":"https://stoat.chat/app"}
+{"url":"https://web.fluxer.app","status":200,"final":"https://web.fluxer.app/"}
+{"url":"https://www.yapper.website/","status":200,"final":"https://www.yapper.website/"}
+{"url":"https://app.wire.com/","status":200,"final":"https://app.wire.com/"}
+{"url":"https://web.threema.ch/","status":200,"final":"https://web.threema.com/"}
+{"method":"GET","url":"https://steamcommunity.com/chat/","status":200,"final":"https://steamcommunity.com/login/home/?goto=%2Fchat%2F","note":"HEAD 404 was a false negative"}
+{"method":"GET","url":"https://steamcommunity.com/chat","status":200,"final":"https://steamcommunity.com/login/home/?goto=%2Fchat"}
+{"method":"GET","url":"https://web.telegram.org/k/","error":"20-second timeout"}

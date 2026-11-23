@@ -11,14 +11,14 @@ notification and media tests using authorized test accounts. No real accounts we
 | Telegram A | https://web.telegram.org/a/ | Registered; authenticated compatibility untested |
 | WhatsApp | https://web.whatsapp.com/ | Registered; pairing/compatibility untested |
 | Slack | https://app.slack.com/ | Registered; cross-origin workspace/SSO navigation restricted pending tests |
-| Steam Chat | https://steamcommunity.com/chat/ | Registered; login redirects restricted pending tests |
+| Steam Chat | https://steamcommunity.com/chat/ | HEAD returned 404; GET recheck returned 200 via same-origin login redirect; registered experimental |
 | Cinny | https://app.cinny.in/ | Registered; homeserver compatibility untested |
 | Element | https://app.element.io/ | Registered; SSO redirects restricted pending tests |
-| Stoat | https://stoat.chat/app | Candidate from source; probe before enabling |
-| Fluxer | https://web.fluxer.app | Candidate from source; probe before enabling |
-| Yapper | https://www.yapper.website/ | Candidate from source; probe before enabling |
+| Stoat | https://stoat.chat/app | HTTP 200; registered experimental; authenticated compatibility untested |
+| Fluxer | https://web.fluxer.app | HTTP 200; registered experimental; authenticated compatibility untested |
+| Yapper | https://www.yapper.website/ | HTTP 200; registered experimental; authenticated compatibility untested |
 | Wire | https://app.wire.com/ | Registered; authenticated compatibility untested |
-| Threema | https://web.threema.ch/ | Registered; pairing/compatibility untested |
+| Threema | https://web.threema.com/ | Source .ch redirects to .com; registered destination; pairing/compatibility untested |
 | Vencord | https://discord.com/app | Not enabled; third-party GPL extension needs verified distribution and compatibility tests |
 | Mumble | Native protocol | Separate voice milestone; no voice client shipped in checkpoint |
 | TeamSpeak | ts3server protocol | Separate native handoff milestone; requires installed client |

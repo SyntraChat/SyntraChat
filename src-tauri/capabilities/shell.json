@@ -1,0 +1,10 @@
+{
+  "identifier": "shell",
+  "description": "Only the trusted local shell may manage accounts. No remote origins.",
+  "local": true,
+  "windows": ["main"],
+  "permissions": [
+    "allow-snapshot", "allow-add-account", "allow-edit-account", "allow-remove-account",
+    "allow-set-appearance", "allow-open-account", "allow-reload-account", "allow-close-account", "allow-quit"
+  ]
+}
