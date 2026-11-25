@@ -1,13 +1,19 @@
 # Release engineering contract
 
-No release is published automatically in this checkpoint. CI uploads preview artifacts
-only. Stable is blocked on all acceptance gates in MIGRATION_PLAN.md and FEATURE_MATRIX.md.
-macOS builds are secondary and not enabled in CI yet.
+The installer repository owns the 0.1.0 preview release workflow. It checks out an exact
+client revision and builds Windows x86-64, Linux x86-64 and macOS Intel/Apple Silicon.
+All native jobs must pass before it publishes packages/checksums/provenance. See
+https://github.com/SyntraChat/SyntraChat-Installer for bootstrap scripts and workflow.
+Stable certification remains blocked on the acceptance gates in MIGRATION_PLAN.md and
+FEATURE_MATRIX.md. The preview is published as a GitHub prerelease.
 
 Use one update authority: signed schema-1 release manifests consumed by the Rust installer
 verification core. Do not simultaneously enable the stock Tauri updater. An update manager
 and safe installer handoff must be implemented before any automatic update UI is exposed.
-The current client does not check for or download updates.
+The current client does not check for or download updates. First-install scripts use
+GitHub HTTPS plus release checksums, not the still-unprovisioned signed update protocol.
+Do not describe these checksums as publisher authentication. Windows builds are unsigned;
+macOS uses ad-hoc signatures without notarization until signing credentials are configured.
 
 The installer README defines the exact manifest and detached raw 64-byte Ed25519 signature.
 Sign the exact manifest bytes; verify before parsing. Every artifact is SHA-256/size bound.

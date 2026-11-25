@@ -1,4 +1,17 @@
 {
   "productName": "SyntraChat",
-  "identifier": "org.syntrachat.desktop"
+  "identifier": "org.syntrachat.desktop",
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "SocialNetworking",
+    "shortDescription": "A compact multi-messenger workspace",
+    "license": "MIT",
+    "homepage": "https://github.com/SyntraChat/SyntraChat",
+    "macOS": { "minimumSystemVersion": "14.0" },
+    "windows": {
+      "nsis": { "installMode": "currentUser" },
+      "webviewInstallMode": { "type": "downloadBootstrapper", "silent": true }
+    }
+  }
 }

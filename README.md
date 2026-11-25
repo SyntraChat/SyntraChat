@@ -26,6 +26,10 @@ prerequisites. [Development](docs/DEVELOPMENT.md) · [Building](docs/BUILDING.md
 [Reference audit](docs/YBOCHAT_FEATURE_AUDIT.md) · [Architecture](docs/ARCHITECTURE.md) ·
 [Threat model](docs/THREAT_MODEL.md) · [Milestones](docs/MIGRATION_PLAN.md).
 
+0.1.0 preview packages and PowerShell/shell installers are managed by the
+[installer repository](https://github.com/SyntraChat/SyntraChat-Installer/releases).
+The macOS package requires macOS 14+ and uses per-account WebKit data stores.
+
 Exactly three primary repositories: this client,
 [installer](https://github.com/SyntraChat/SyntraChat-Installer),
 and [community](https://github.com/SyntraChat/.github). Each has independent Git history.

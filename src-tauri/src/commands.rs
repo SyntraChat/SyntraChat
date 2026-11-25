@@ -197,9 +197,6 @@ pub async fn open_account(
 ) -> Result<()> {
     trusted(&caller)?;
     let account = account(&state, id)?;
-    if cfg!(target_os = "macos") {
-        return Err("macOS profile isolation is not verified".into());
-    }
     let view_label = format!("account-{id}");
     let window = app.get_window("main").ok_or("Main window unavailable")?;
     if app.get_webview(&view_label).is_none() {
@@ -216,6 +213,9 @@ pub async fn open_account(
             .on_new_window(|_, _| NewWindowResponse::Deny)
             .on_permission_request(|_, _| PermissionResponse::Deny)
             .on_download(|_, _| false);
+        // WKWebView ignores data_directory; macOS 14+ supports persistent UUID stores.
+        #[cfg(target_os = "macos")]
+        let builder = builder.data_store_identifier(*id.as_bytes());
         let view = window
             .add_child(builder, rect.position, rect.size)
             .map_err(|e| e.to_string())?;

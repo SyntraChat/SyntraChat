@@ -22,7 +22,7 @@
 | TeamSpeak | Researched; saved-server/handoff milestone pending |
 | Vencord | Not bundled/enabled; extension security/compatibility milestone pending |
 | Update channels, signed network updates | Contract researched; verification core in installer; no client update manager |
-| Rust installer/uninstaller | Independent verification CLI/library implemented; install lifecycle/GUI not implemented |
-| Linux runtime, macOS, portable mode | Not verified; macOS account opening explicitly gated |
+| Installers and packaging | Installer repository owns native Setup/PKG, DEB/RPM/Arch/AppImage/Flatpak, CLI scripts and Linux GUI wrapper; preview build gates apply |
+| Linux runtime, macOS | Native release build checks; macOS 14+ UUID data stores implemented; authenticated runtime not certified |
 | CI | Workflows prepared locally; remote run not yet verified |
 | Stable-release acceptance | Not satisfied |

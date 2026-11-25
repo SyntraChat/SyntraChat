@@ -10,7 +10,8 @@ The optional horizontal layout reserves a full-width 42px tab strip below that t
 Rust creates, switches, hides, resizes and closes these views. Local dialogs temporarily
 hide remote content to avoid native views obscuring the dialog. Closing an account tab
 preserves its profile. Windows/Linux use app-local `profiles/<uuid>` directories.
-macOS account opening is gated until datastore isolation and minimum OS are tested.
+macOS 14+ uses WebKit persistent data stores identified by the account UUID, because
+WKWebView does not support data_directory. Runtime login isolation remains unverified.
 
 | Subsystem | Interface / ownership |
 | --- | --- |
