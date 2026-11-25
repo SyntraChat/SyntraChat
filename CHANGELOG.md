@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replaced the app and favicon artwork with the supplied chat.png, including generated
+  Windows, Linux and macOS icon formats.
 - Fixed overlapping account-row menus by sharing the native tab menu. Preserved every
   saved zoom value in Edit, prevented stacked quick-switch dialogs and concurrent
   commands, and kept delayed snapshots from overwriting newer workspace state.
