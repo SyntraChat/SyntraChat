@@ -1,6 +1,6 @@
 # Reference attribution
 
-Independent implementation; no Ybochat source/assets bundled. Reference license evidence:
+Independent native implementation. Monochrome service glyphs in public/services are adapted from Ybochat apps.js at commit 461d9895fdd1c40e3efcdfd14f056d4e42ae8c6b. No Electron runtime or application implementation is imported. The applicable reference MIT grant is retained below:
 
 MIT License
 
@@ -23,4 +23,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-

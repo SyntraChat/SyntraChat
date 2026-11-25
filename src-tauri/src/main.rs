@@ -2,6 +2,7 @@
 mod commands;
 mod registry;
 mod settings;
+mod tab_controls;
 mod views;
 use commands::AppState;
 use settings::Store;
@@ -22,10 +23,19 @@ fn main() {
         .setup(|app| {
             let path = app.path().app_config_dir()?.join("settings.json");
             let store = Store::load(path).map_err(|e| e.to_string());
+            let horizontal_tabs = store
+                .as_ref()
+                .map(|s| s.settings.horizontal_tabs)
+                .unwrap_or(false);
             app.manage(AppState {
                 store: Mutex::new(store),
             });
-            app.manage(views::Workspace::default());
+            let workspace = views::Workspace::default();
+            *workspace
+                .horizontal_tabs
+                .lock()
+                .expect("New workspace lock") = horizontal_tabs;
+            app.manage(workspace);
             let window = WindowBuilder::new(app, "main")
                 .title(if cfg!(debug_assertions) {
                     "SyntraChat · Development"
@@ -60,7 +70,12 @@ fn main() {
             window.add_child(shell, LogicalPosition::new(0.0, 0.0), window.inner_size()?)?;
             Ok(())
         })
+        .on_menu_event(tab_controls::handle_menu)
         .invoke_handler(tauri::generate_handler![
+            tab_controls::account_menu,
+            tab_controls::reorder_accounts,
+            tab_controls::set_account_color,
+            tab_controls::set_tab_layout,
             commands::snapshot,
             commands::add_account,
             commands::edit_account,

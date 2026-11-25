@@ -13,8 +13,11 @@ fn only_local_shell_webview_receives_explicit_command_permissions() {
     assert!(capability.get("remote").is_none());
     for permission in capability["permissions"].as_array().unwrap() {
         let permission = permission.as_str().unwrap();
-        assert!(permission.starts_with("allow-"));
-        assert!(!permission.contains(':') && !permission.contains('*'));
+        assert!(
+            permission.starts_with("allow-")
+                || ["core:event:allow-listen", "core:event:allow-unlisten"].contains(&permission)
+        );
+        assert!(!permission.contains('*') && !permission.contains("allow-emit"));
     }
     let config: Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
     assert_eq!(

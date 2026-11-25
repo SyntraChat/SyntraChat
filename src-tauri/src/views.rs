@@ -5,19 +5,35 @@ use uuid::Uuid;
 #[derive(Default)]
 pub struct Workspace {
     pub active: Mutex<Option<Uuid>>,
+    pub horizontal_tabs: Mutex<bool>,
 }
 
-pub fn content_size(width: f64, height: f64) -> LogicalSize<f64> {
-    LogicalSize::new((width - 56.0).max(1.0), (height - 42.0).max(1.0))
+pub fn content_size(width: f64, height: f64, horizontal: bool) -> LogicalSize<f64> {
+    let (left, top) = if horizontal {
+        (0.0, 84.0)
+    } else {
+        (56.0, 42.0)
+    };
+    LogicalSize::new((width - left).max(1.0), (height - top).max(1.0))
 }
 
 pub fn bounds(window: &Window) -> tauri::Result<Rect> {
     let size = window
         .inner_size()?
         .to_logical::<f64>(window.scale_factor()?);
+    let horizontal = *window
+        .state::<Workspace>()
+        .horizontal_tabs
+        .lock()
+        .map_err(|_| tauri::Error::Io(std::io::Error::other("Workspace lock failed")))?;
     Ok(Rect {
-        position: LogicalPosition::new(56.0, 42.0).into(),
-        size: content_size(size.width, size.height).into(),
+        position: if horizontal {
+            LogicalPosition::new(0.0, 84.0)
+        } else {
+            LogicalPosition::new(56.0, 42.0)
+        }
+        .into(),
+        size: content_size(size.width, size.height, horizontal).into(),
     })
 }
 
@@ -55,8 +71,18 @@ mod tests {
     use super::*;
     #[test]
     fn content_leaves_rail_and_toolbar_visible_at_every_size() {
-        assert_eq!(content_size(1180.0, 800.0), LogicalSize::new(1124.0, 758.0));
-        assert_eq!(content_size(760.0, 560.0), LogicalSize::new(704.0, 518.0));
-        assert_eq!(content_size(0.0, 0.0), LogicalSize::new(1.0, 1.0));
+        assert_eq!(
+            content_size(1180.0, 800.0, false),
+            LogicalSize::new(1124.0, 758.0)
+        );
+        assert_eq!(
+            content_size(760.0, 560.0, false),
+            LogicalSize::new(704.0, 518.0)
+        );
+        assert_eq!(
+            content_size(1180.0, 800.0, true),
+            LogicalSize::new(1180.0, 716.0)
+        );
+        assert_eq!(content_size(0.0, 0.0, true), LogicalSize::new(1.0, 1.0));
     }
 }

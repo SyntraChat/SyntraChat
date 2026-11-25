@@ -12,6 +12,10 @@ fn main() {
             "quit",
             "show_home",
             "set_content_visible",
+            "account_menu",
+            "reorder_accounts",
+            "set_account_color",
+            "set_tab_layout",
         ]),
     ))
     .expect("Tauri build configuration failed");

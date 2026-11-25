@@ -6,11 +6,15 @@ import {
   screen,
   waitFor,
   within,
+  act,
+  fireEvent,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { App } from "./App";
 import { api, type Snapshot } from "./api";
+import { listen } from "@tauri-apps/api/event";
+vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn() }));
 
 vi.mock("./api", () => ({
   api: {
@@ -25,6 +29,10 @@ vi.mock("./api", () => ({
     quit: vi.fn(),
     home: vi.fn(),
     contentVisible: vi.fn(),
+    reorder: vi.fn(),
+    color: vi.fn(),
+    layout: vi.fn(),
+    accountMenu: vi.fn(),
   },
 }));
 const initial: Snapshot = {
@@ -37,10 +45,12 @@ const initial: Snapshot = {
         serviceId: "discord",
         url: "https://discord.com/app",
         zoom: 1,
+        color: null,
       },
     ],
     theme: "dark",
     accent: "#a78bfa",
+    horizontalTabs: false,
   },
   services: [
     {
@@ -59,6 +69,7 @@ const initial: Snapshot = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(listen).mockResolvedValue(() => {});
   vi.mocked(api.contentVisible).mockResolvedValue(undefined);
   vi.mocked(api.snapshot).mockResolvedValue(structuredClone(initial));
   HTMLDialogElement.prototype.showModal = function () {
@@ -185,6 +196,63 @@ describe("workspace", () => {
     await user.click(screen.getByRole("button", { name: "Close dialog" }));
     await waitFor(() =>
       expect(api.contentVisible).toHaveBeenLastCalledWith(true),
+    );
+  });
+  it("opens native tab controls and applies an account color action", async () => {
+    render(<App />);
+    const tab = await screen.findByRole("button", {
+      name: "Open Discord Personal",
+    });
+    fireEvent.contextMenu(tab);
+    await waitFor(() =>
+      expect(api.accountMenu).toHaveBeenCalledWith("account-1"),
+    );
+    const handler = vi.mocked(listen).mock.calls.at(-1)![1];
+    await act(async () =>
+      handler({
+        event: "account-action",
+        id: 1,
+        payload: { id: "account-1", action: "color-#60a5fa" },
+      }),
+    );
+    await waitFor(() =>
+      expect(api.color).toHaveBeenCalledWith("account-1", "#60a5fa"),
+    );
+  });
+  it("persists layout choice through the native command", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Discord Personal" });
+    await user.click(
+      screen.getByRole("button", { name: "Appearance settings" }),
+    );
+    await user.click(await screen.findByRole("button", { name: "Top tabs" }));
+    await waitFor(() => expect(api.layout).toHaveBeenCalledWith(true));
+  });
+  it("sends the complete account order when a tab is dropped", async () => {
+    const data = structuredClone(initial);
+    data.settings.accounts.push({
+      ...data.settings.accounts[0]!,
+      id: "account-2",
+      name: "Work",
+    });
+    vi.mocked(api.snapshot).mockResolvedValue(data);
+    render(<App />);
+    const from = await screen.findByRole("button", {
+      name: "Open Discord Personal",
+    });
+    const to = screen.getByRole("button", { name: "Open Work" });
+    window.PointerEvent = MouseEvent as typeof PointerEvent;
+    from.setPointerCapture = vi.fn();
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: () => to,
+    });
+    fireEvent.pointerDown(from, { button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(from, { clientX: 100, clientY: 150 });
+    fireEvent.pointerUp(from, { clientX: 100, clientY: 150 });
+    await waitFor(() =>
+      expect(api.reorder).toHaveBeenCalledWith(["account-2", "account-1"]),
     );
   });
 });

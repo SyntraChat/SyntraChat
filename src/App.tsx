@@ -6,6 +6,8 @@ import { useCallback, useEffect, useState } from "react";
 import { api, type Account, type Snapshot } from "./api";
 import { textOnAccent } from "./appearance";
 import { Search, RefreshCw, X } from "lucide-react";
+import { listen } from "@tauri-apps/api/event";
+import { moveTab, stepZoom } from "./tabs";
 
 export function App() {
   const [data, setData] = useState<Snapshot>();
@@ -64,7 +66,62 @@ export function App() {
       "--on-accent",
       textOnAccent(data.settings.accent),
     );
+    document.documentElement.dataset.layout = data.settings.horizontalTabs
+      ? "tabs"
+      : "sidebar";
   }, [data]);
+  useEffect(() => {
+    let disposed = false;
+    const unlisten = listen<{ id: string; action: string }>(
+      "account-action",
+      ({ payload }) => {
+        const account = data?.settings.accounts.find(
+          (a) => a.id === payload.id,
+        );
+        if (disposed || !account) return;
+        const action = payload.action;
+        if (action === "edit") {
+          setEditing(account);
+          return;
+        }
+        if (action === "remove") {
+          setRemoving(account);
+          return;
+        }
+        void run(async () => {
+          if (action === "reload") await api.reload(account.id);
+          else if (action === "close") await api.close(account.id);
+          else if (action.startsWith("color-"))
+            await api.color(
+              account.id,
+              action === "color-none" ? null : action.slice(6),
+            );
+          else if (action.startsWith("zoom-"))
+            await api.edit(
+              account.id,
+              account.name,
+              action === "zoom-reset"
+                ? 1
+                : stepZoom(account.zoom, action === "zoom-in" ? 1 : -1),
+            );
+          else if (action === "up" || action === "down") {
+            const ids = data!.settings.accounts.map((a) => a.id);
+            const target =
+              ids[ids.indexOf(account.id) + (action === "up" ? -1 : 1)];
+            if (target) await api.reorder(moveTab(ids, account.id, target));
+          }
+        });
+      },
+      { target: { kind: "Webview", label: "main" } },
+    );
+    void unlisten.catch((e) => {
+      if (!disposed) setError(String(e));
+    });
+    return () => {
+      disposed = true;
+      void unlisten.then((stop) => stop()).catch(() => {});
+    };
+  }, [data, run]);
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -101,6 +158,8 @@ export function App() {
         openAccount={openAccount}
         setAdding={setAdding}
         run={run}
+        showMenu={(id) => void run(() => api.accountMenu(id))}
+        reorder={(ids) => void run(() => api.reorder(ids))}
       />
       <main>
         <header>
@@ -116,6 +175,13 @@ export function App() {
           </span>
           {active && (
             <div className="active-actions">
+              <button
+                aria-label="Active account options"
+                title="Account options"
+                onClick={() => void run(() => api.accountMenu(active.id))}
+              >
+                {Math.round(active.zoom * 100)}%
+              </button>
               <button
                 aria-label="Reload active account"
                 title="Reload"

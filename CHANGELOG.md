@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added service icons, native account menus, color tags, zoom actions and drag-to-reorder
+  tabs. Added a saved choice of the compact sidebar or a horizontal tab strip.
 - Embedded accounts in the main window with native child WebViews, rail switching,
   resizing, reload/close controls and dialog visibility handling. Narrowed IPC grants
   from window scope to the trusted shell WebView only; retained account profile paths.

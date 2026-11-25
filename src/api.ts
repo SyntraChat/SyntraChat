@@ -6,12 +6,14 @@ export interface Account {
   name: string;
   url: string;
   zoom: number;
+  color: string | null;
 }
 export interface Settings {
   version: number;
   accounts: Account[];
   theme: string;
   accent: string;
+  horizontalTabs: boolean;
 }
 export interface Service {
   id: string;
@@ -46,4 +48,10 @@ export const api = {
   contentVisible: (visible: boolean) =>
     invoke<void>("set_content_visible", { visible }),
   quit: () => invoke<void>("quit"),
+  reorder: (ids: string[]) => invoke<void>("reorder_accounts", { ids }),
+  color: (id: string, color: string | null) =>
+    invoke<void>("set_account_color", { id, color }),
+  layout: (horizontal: boolean) =>
+    invoke<void>("set_tab_layout", { horizontal }),
+  accountMenu: (id: string) => invoke<void>("account_menu", { id }),
 };

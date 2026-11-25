@@ -2,8 +2,10 @@
 
 Inspected 2026-11-23 at commit `461d9895fdd1c40e3efcdfd14f056d4e42ae8c6b` of
 [Anti-Depressants-Dev-Team/Ybochat](https://github.com/Anti-Depressants-Dev-Team/Ybochat).
-The read-only checkout lives outside all three product repositories. No source or assets
-are ported. Inspection is static; Ybochat was not run with real accounts.
+The read-only checkout lives outside all three product repositories. No Electron
+implementation is ported. A later UI iteration adapts the catalog's monochrome service
+glyphs under its MIT grant; see public/services/README.md and THIRD_PARTY_NOTICES.md.
+Inspection is static; Ybochat was not run with real accounts.
 
 | Source / behavior | Classification | SyntraChat mapping |
 | --- | --- | --- |

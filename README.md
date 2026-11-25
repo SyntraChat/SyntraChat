@@ -32,5 +32,6 @@ and [community](https://github.com/SyntraChat/.github). Each has independent Git
 See [publishing](docs/PUBLISHING.md) for repository and push details.
 
 The Ybochat checkout is a read-only functional reference, outside the product repositories.
-No Electron code, assets, credentials or session stores are imported. MIT; upstream license
+No Electron code, credentials or session stores are imported. Service glyphs are adapted
+from the reference's MIT-licensed catalog with attribution. MIT; upstream license
 conflict and attribution evidence are recorded in [notices](THIRD_PARTY_NOTICES.md).

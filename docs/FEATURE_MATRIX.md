@@ -12,7 +12,8 @@
 | Ctrl+K, account search, keyboard dialog escape | Implemented; interaction tests and native Ctrl+K smoke test |
 | Diagnostics, actual loaded view count, Quit | Implemented; engine version/memory/startup unknown |
 | Versioned settings, atomic saving | Implemented; invalid/corrupt/future schemas rejected without overwriting; no legacy migration/import |
-| Reorder, multiple workspaces, pinning/layout options | Planned |
+| Account reorder, color tags, native menus, sidebar/top tabs | Implemented; Windows native drag/menu/layout/restart smoke tests; backend validation tests |
+| Multiple workspaces and pinning | Planned |
 | Session-data deletion option and backup/restore | Planned; account removal currently retains session |
 | Mute, unread badges, notifications, DND | Unavailable; no fabricated indicators |
 | Tray, autostart, deep links, global/configurable shortcuts | Planned; OS-native chrome is present |

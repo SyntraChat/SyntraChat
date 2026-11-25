@@ -11,7 +11,7 @@ pub struct AppState {
 }
 type Result<T> = std::result::Result<T, String>;
 
-fn trusted(caller: &Webview) -> Result<()> {
+pub(crate) fn trusted(caller: &Webview) -> Result<()> {
     if caller.label() == "main" {
         Ok(())
     } else {
@@ -24,7 +24,7 @@ fn locked(state: &AppState) -> Result<MutexGuard<'_, std::result::Result<Store, 
         .lock()
         .map_err(|_| "Settings lock failed".into())
 }
-fn account(state: &AppState, id: Uuid) -> Result<Account> {
+pub(crate) fn account(state: &AppState, id: Uuid) -> Result<Account> {
     locked(state)?
         .as_ref()
         .map_err(Clone::clone)?
@@ -35,7 +35,10 @@ fn account(state: &AppState, id: Uuid) -> Result<Account> {
         .cloned()
         .ok_or_else(|| "Account no longer exists".into())
 }
-fn update(state: &AppState, mutate: impl FnOnce(&mut Settings) -> Result<()>) -> Result<()> {
+pub(crate) fn update(
+    state: &AppState,
+    mutate: impl FnOnce(&mut Settings) -> Result<()>,
+) -> Result<()> {
     let mut guard = locked(state)?;
     let store = guard.as_mut().map_err(|e| e.clone())?;
     let mut next = store.settings.clone();
@@ -117,6 +120,7 @@ pub fn add_account(
             name,
             url: home,
             zoom: 1.0,
+            color: None,
         });
         Ok(())
     })

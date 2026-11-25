@@ -10,6 +10,27 @@ export function Appearance({ data, busy, run }: Props) {
     <>
       <h1>Appearance</h1>
       <section className="settings-panel">
+        <h2>Account tabs</h2>
+        <div
+          className="theme-options"
+          role="group"
+          aria-label="Account tab layout"
+        >
+          <button
+            disabled={busy}
+            aria-pressed={!data.settings.horizontalTabs}
+            onClick={() => void run(() => api.layout(false))}
+          >
+            Sidebar
+          </button>
+          <button
+            disabled={busy}
+            aria-pressed={data.settings.horizontalTabs}
+            onClick={() => void run(() => api.layout(true))}
+          >
+            Top tabs
+          </button>
+        </div>
         <h2>Color theme</h2>
         <div className="theme-options">
           {["dark", "light", "oled", "midnight", "system"].map((theme) => (

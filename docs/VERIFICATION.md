@@ -1,4 +1,26 @@
-# Verification record — 2026-11-23
+# Verification record
+
+## Compact account controls — 2026-11-25
+
+- TypeScript checking, ESLint and the production frontend build passed.
+- Frontend tests: 13 passed, including menu action dispatch, layout selection, pointer
+  reordering and bounded zoom steps.
+- Rust tests: nine unit tests and one capability regression test passed. New checks
+  cover older settings defaults, saved colors/layout, invalid permutations and both
+  native content layouts. Rust formatting and Clippy with warnings denied passed.
+- Built the Windows development executable with the embedded frontend.
+- Native Windows smoke test: service icons rendered, the native account color submenu
+  applied a blue tag, top tabs changed the layout, and the layout/tag restored after
+  restart. Pointer dragging reordered two accounts without opening one accidentally.
+  Opening Discord then rendered its login page inside the same window, aligned below
+  the horizontal tabs. No login credentials were entered.
+
+The saved development accounts remain available for review. Linux runtime, authenticated
+session isolation and every native menu action remain unverified. Existing media and
+download restrictions still apply. Static service glyphs adapted from the pinned Ybochat
+source retain their MIT notice; no Electron renderer/runtime implementation was imported.
+
+## Earlier checks — 2026-11-23
 
 ## Embedded account views
 

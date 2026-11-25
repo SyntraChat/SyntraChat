@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowUpRight, MoreHorizontal, Plus, Search } from "lucide-react";
+import { ArrowRight, MoreHorizontal, Plus, Search } from "lucide-react";
+import { ServiceIcon } from "./ServiceIcon";
 import { api, type Account, type Snapshot } from "../api";
 
 type Props = {
@@ -50,8 +51,12 @@ export function AccountsOverview({
           const open = data?.openAccounts.includes(account.id);
           return (
             <article className="account-row" key={account.id}>
-              <span className="account-icon" aria-hidden="true">
-                {account.name.slice(0, 1).toUpperCase()}
+              <span
+                className="account-icon"
+                aria-hidden="true"
+                style={account.color ? { color: account.color } : undefined}
+              >
+                <ServiceIcon serviceId={account.serviceId} />
               </span>
               <div className="account-label">
                 <h2>{account.name}</h2>
@@ -69,7 +74,7 @@ export function AccountsOverview({
                 disabled={busy}
                 onClick={() => void run(() => openAccount(account.id))}
               >
-                Open account <ArrowUpRight size={14} />
+                Open account <ArrowRight size={14} />
               </button>
               <details className="account-options">
                 <summary
