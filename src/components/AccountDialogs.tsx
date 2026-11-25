@@ -8,6 +8,7 @@ import {
   X,
 } from "lucide-react";
 import type { Account, Snapshot } from "../api";
+import { zoomSteps } from "../tabs";
 
 export function AccountForm({
   data,
@@ -74,11 +75,13 @@ export function AccountForm({
         <label>
           Zoom
           <select name="zoom" defaultValue={account.zoom}>
-            {[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((z) => (
-              <option value={z} key={z}>
-                {z * 100}%
-              </option>
-            ))}
+            {[...new Set([...zoomSteps, account.zoom])]
+              .sort((a, b) => a - b)
+              .map((z) => (
+                <option value={z} key={z}>
+                  {Math.round(z * 100)}%
+                </option>
+              ))}
           </select>
         </label>
       )}

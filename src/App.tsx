@@ -2,7 +2,13 @@ import { Navigation, type Page } from "./components/Navigation";
 import { AccountsOverview } from "./components/AccountsOverview";
 import { Appearance, Diagnostics } from "./components/Preferences";
 import { AccountForm, Modal, Palette } from "./components/AccountDialogs";
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 import { api, type Account, type Snapshot } from "./api";
 import { textOnAccent } from "./appearance";
 import { Search, RefreshCw, X } from "lucide-react";
@@ -18,7 +24,13 @@ export function App() {
   const [editing, setEditing] = useState<Account>();
   const [removing, setRemoving] = useState<Account>();
   const [palette, setPalette] = useState(false);
-  const refresh = useCallback(async () => setData(await api.snapshot()), []);
+  const snapshotRequest = useRef(0);
+  const operationPending = useRef(false);
+  const refresh = useCallback(async () => {
+    const request = ++snapshotRequest.current;
+    const next = await api.snapshot();
+    if (request === snapshotRequest.current) setData(next);
+  }, []);
   const openAccount = useCallback(async (id: string) => {
     await api.open(id);
     setPage("accounts");
@@ -31,6 +43,8 @@ export function App() {
   };
   const run = useCallback(
     async (operation: () => Promise<void>) => {
+      if (operationPending.current) return;
+      operationPending.current = true;
       setBusy(true);
       setError("");
       try {
@@ -39,11 +53,16 @@ export function App() {
       } catch (e) {
         setError(String(e));
       } finally {
+        operationPending.current = false;
         setBusy(false);
       }
     },
     [refresh],
   );
+  const showMenu = (id: string) => {
+    if (operationPending.current) return;
+    void api.accountMenu(id).catch((e) => setError(String(e)));
+  };
 
   useEffect(() => {
     void refresh().catch((e) => setError(String(e)));
@@ -70,47 +89,50 @@ export function App() {
       ? "tabs"
       : "sidebar";
   }, [data]);
+  const onAccountAction = useEffectEvent(
+    (payload: { id: string; action: string }) => {
+      const account = data?.settings.accounts.find((a) => a.id === payload.id);
+      if (!account) return;
+      const action = payload.action;
+      if (action === "edit") {
+        setEditing(account);
+        return;
+      }
+      if (action === "remove") {
+        setRemoving(account);
+        return;
+      }
+      void run(async () => {
+        if (action === "reload") await api.reload(account.id);
+        else if (action === "close") await api.close(account.id);
+        else if (action.startsWith("color-"))
+          await api.color(
+            account.id,
+            action === "color-none" ? null : action.slice(6),
+          );
+        else if (action.startsWith("zoom-"))
+          await api.edit(
+            account.id,
+            account.name,
+            action === "zoom-reset"
+              ? 1
+              : stepZoom(account.zoom, action === "zoom-in" ? 1 : -1),
+          );
+        else if (action === "up" || action === "down") {
+          const ids = data!.settings.accounts.map((a) => a.id);
+          const target =
+            ids[ids.indexOf(account.id) + (action === "up" ? -1 : 1)];
+          if (target) await api.reorder(moveTab(ids, account.id, target));
+        }
+      });
+    },
+  );
   useEffect(() => {
     let disposed = false;
     const unlisten = listen<{ id: string; action: string }>(
       "account-action",
       ({ payload }) => {
-        const account = data?.settings.accounts.find(
-          (a) => a.id === payload.id,
-        );
-        if (disposed || !account) return;
-        const action = payload.action;
-        if (action === "edit") {
-          setEditing(account);
-          return;
-        }
-        if (action === "remove") {
-          setRemoving(account);
-          return;
-        }
-        void run(async () => {
-          if (action === "reload") await api.reload(account.id);
-          else if (action === "close") await api.close(account.id);
-          else if (action.startsWith("color-"))
-            await api.color(
-              account.id,
-              action === "color-none" ? null : action.slice(6),
-            );
-          else if (action.startsWith("zoom-"))
-            await api.edit(
-              account.id,
-              account.name,
-              action === "zoom-reset"
-                ? 1
-                : stepZoom(account.zoom, action === "zoom-in" ? 1 : -1),
-            );
-          else if (action === "up" || action === "down") {
-            const ids = data!.settings.accounts.map((a) => a.id);
-            const target =
-              ids[ids.indexOf(account.id) + (action === "up" ? -1 : 1)];
-            if (target) await api.reorder(moveTab(ids, account.id, target));
-          }
-        });
+        if (!disposed) onAccountAction(payload);
       },
       { target: { kind: "Webview", label: "main" } },
     );
@@ -121,11 +143,14 @@ export function App() {
       disposed = true;
       void unlisten.then((stop) => stop()).catch(() => {});
     };
-  }, [data, run]);
+  }, []);
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setAdding(false);
+        setEditing(undefined);
+        setRemoving(undefined);
         setPalette((p) => !p);
       }
       if (event.key === "Escape") {
@@ -158,7 +183,7 @@ export function App() {
         openAccount={openAccount}
         setAdding={setAdding}
         run={run}
-        showMenu={(id) => void run(() => api.accountMenu(id))}
+        showMenu={showMenu}
         reorder={(ids) => void run(() => api.reorder(ids))}
       />
       <main>
@@ -178,7 +203,8 @@ export function App() {
               <button
                 aria-label="Active account options"
                 title="Account options"
-                onClick={() => void run(() => api.accountMenu(active.id))}
+                disabled={busy}
+                onClick={() => showMenu(active.id)}
               >
                 {Math.round(active.zoom * 100)}%
               </button>
@@ -224,8 +250,7 @@ export function App() {
               data={data}
               busy={busy}
               setAdding={setAdding}
-              setEditing={setEditing}
-              setRemoving={setRemoving}
+              showMenu={showMenu}
               run={run}
               openAccount={openAccount}
             />

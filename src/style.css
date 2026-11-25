@@ -335,39 +335,11 @@ kbd {
   font-size: 12px;
 }
 .account-options {
-  position: relative;
-}
-.account-options summary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 28px;
   height: 28px;
-  list-style: none;
-  cursor: pointer;
-  color: var(--muted);
-  border-radius: 5px;
-}
-.account-options summary::-webkit-details-marker {
-  display: none;
-}
-.account-menu {
-  position: absolute;
-  right: 0;
-  top: 32px;
-  width: 145px;
-  display: flex;
-  flex-direction: column;
-  z-index: 1;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--panel);
-  box-shadow: 0 6px 18px #0003;
-}
-.account-menu button {
-  justify-content: flex-start;
+  padding: 0;
   border: 0;
+  color: var(--muted);
 }
 .empty-state {
   padding: 80px 16px;

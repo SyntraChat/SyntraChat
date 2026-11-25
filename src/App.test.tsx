@@ -71,6 +71,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(listen).mockResolvedValue(() => {});
   vi.mocked(api.contentVisible).mockResolvedValue(undefined);
+  vi.mocked(api.accountMenu).mockResolvedValue(undefined);
   vi.mocked(api.snapshot).mockResolvedValue(structuredClone(initial));
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute("open", "");
@@ -120,7 +121,15 @@ describe("workspace", () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Discord Personal" });
     await user.click(screen.getByLabelText("Options for Discord Personal"));
-    await user.click(screen.getByRole("button", { name: "Remove" }));
+    await act(async () =>
+      vi
+        .mocked(listen)
+        .mock.calls.at(-1)![1]({
+          event: "account-action",
+          id: 1,
+          payload: { id: "account-1", action: "remove" },
+        }),
+    );
     expect(api.remove).not.toHaveBeenCalled();
     await user.click(
       screen.getByRole("button", { name: "Remove account, keep session" }),
@@ -254,5 +263,116 @@ describe("workspace", () => {
     await waitFor(() =>
       expect(api.reorder).toHaveBeenCalledWith(["account-2", "account-1"]),
     );
+  });
+  it("uses native menus for account rows without leaving overlapping dropdowns", async () => {
+    const data = structuredClone(initial);
+    data.settings.accounts.push({
+      ...data.settings.accounts[0]!,
+      id: "account-2",
+      name: "Work",
+    });
+    vi.mocked(api.snapshot).mockResolvedValue(data);
+    const user = userEvent.setup();
+    const { container } = render(<App />);
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Options for Discord Personal",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Options for Work" }));
+    expect(api.accountMenu).toHaveBeenNthCalledWith(1, "account-1");
+    expect(api.accountMenu).toHaveBeenNthCalledWith(2, "account-2");
+    expect(container.querySelector("details, .account-menu")).toBeNull();
+  });
+  it.each([1.1, 1.15, 0.67])(
+    "preserves %s zoom when only the account name changes",
+    async (zoom) => {
+      const data = structuredClone(initial);
+      data.settings.accounts[0]!.zoom = zoom;
+      vi.mocked(api.snapshot).mockResolvedValue(data);
+      const user = userEvent.setup();
+      render(<App />);
+      await screen.findByRole("heading", { name: "Discord Personal" });
+      await act(async () =>
+        vi
+          .mocked(listen)
+          .mock.calls.at(-1)![1]({
+            event: "account-action",
+            id: 1,
+            payload: { id: "account-1", action: "edit" },
+          }),
+      );
+      expect((screen.getByLabelText("Zoom") as HTMLSelectElement).value).toBe(
+        String(zoom),
+      );
+      await user.clear(screen.getByLabelText("Account label"));
+      await user.type(screen.getByLabelText("Account label"), "Renamed");
+      await user.click(screen.getByRole("button", { name: "Save account" }));
+      await waitFor(() =>
+        expect(api.edit).toHaveBeenCalledWith("account-1", "Renamed", zoom),
+      );
+    },
+  );
+  it("replaces an open form with the quick switcher instead of stacking dialogs", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Discord Personal" });
+    await user.click(
+      within(screen.getByRole("main")).getByRole("button", {
+        name: "Add account",
+      }),
+    );
+    await user.keyboard("{Control>}k{/Control}");
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(screen.getByRole("dialog", { name: "Quick switch" })).toBeTruthy();
+  });
+  it("keeps the latest snapshot and one native listener when focus refreshes overlap", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Discord Personal" });
+    let resolveOld!: (data: Snapshot) => void;
+    vi.mocked(api.snapshot).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOld = resolve;
+        }),
+    );
+    fireEvent.focus(window);
+    const updated = structuredClone(initial);
+    updated.settings.accounts[0]!.name = "Updated";
+    vi.mocked(api.snapshot).mockResolvedValue(updated);
+    fireEvent.focus(window);
+    await screen.findByRole("heading", { name: "Updated" });
+    await act(async () => resolveOld(initial));
+    expect(
+      screen.queryByRole("heading", { name: "Discord Personal" }),
+    ).toBeNull();
+    expect(listen).toHaveBeenCalledTimes(1);
+    await act(async () =>
+      vi.mocked(listen).mock.calls[0]![1]({
+        event: "account-action",
+        id: 1,
+        payload: { id: "account-1", action: "edit" },
+      }),
+    );
+    expect(
+      (screen.getByLabelText("Account label") as HTMLInputElement).value,
+    ).toBe("Updated");
+  });
+  it("prevents overlapping commands before busy state renders", async () => {
+    let finish!: () => void;
+    vi.mocked(api.open).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    render(<App />);
+    const open = await screen.findByRole("button", { name: "Open account" });
+    act(() => {
+      open.click();
+      open.click();
+    });
+    expect(api.open).toHaveBeenCalledTimes(1);
+    await act(async () => finish());
   });
 });

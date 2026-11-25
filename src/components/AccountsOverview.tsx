@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { ArrowRight, MoreHorizontal, Plus, Search } from "lucide-react";
 import { ServiceIcon } from "./ServiceIcon";
-import { api, type Account, type Snapshot } from "../api";
+import { type Snapshot } from "../api";
 
 type Props = {
   data?: Snapshot;
   busy: boolean;
   setAdding: (v: boolean) => void;
-  setEditing: (a: Account) => void;
-  setRemoving: (a: Account) => void;
+  showMenu: (id: string) => void;
   run: (operation: () => Promise<void>) => Promise<void>;
   openAccount: (id: string) => Promise<void>;
 };
@@ -16,8 +15,7 @@ export function AccountsOverview({
   data,
   busy,
   setAdding,
-  setEditing,
-  setRemoving,
+  showMenu,
   run,
   openAccount,
 }: Props) {
@@ -41,7 +39,7 @@ export function AccountsOverview({
         <button
           className="primary"
           onClick={() => setAdding(true)}
-          disabled={!data}
+          disabled={!data || busy}
         >
           <Plus size={15} /> Add account
         </button>
@@ -76,38 +74,15 @@ export function AccountsOverview({
               >
                 Open account <ArrowRight size={14} />
               </button>
-              <details className="account-options">
-                <summary
-                  aria-label={`Options for ${account.name}`}
-                  title="Account options"
-                >
-                  <MoreHorizontal size={18} />
-                </summary>
-                <div className="account-menu">
-                  <button disabled={busy} onClick={() => setEditing(account)}>
-                    Edit
-                  </button>
-                  {open && (
-                    <>
-                      <button
-                        disabled={busy}
-                        onClick={() => void run(() => api.reload(account.id))}
-                      >
-                        Reload
-                      </button>
-                      <button
-                        disabled={busy}
-                        onClick={() => void run(() => api.close(account.id))}
-                      >
-                        Close tab
-                      </button>
-                    </>
-                  )}
-                  <button disabled={busy} onClick={() => setRemoving(account)}>
-                    Remove
-                  </button>
-                </div>
-              </details>
+              <button
+                className="account-options"
+                aria-label={`Options for ${account.name}`}
+                title="Account options"
+                disabled={busy}
+                onClick={() => showMenu(account.id)}
+              >
+                <MoreHorizontal size={18} />
+              </button>
             </article>
           );
         })}

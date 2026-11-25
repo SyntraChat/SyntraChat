@@ -42,6 +42,7 @@ export function Navigation({
         }
         aria-label="Accounts"
         title="Accounts"
+        disabled={busy}
         onClick={() => setPage("accounts")}
       >
         <Layers size={19} />
@@ -135,7 +136,7 @@ export function Navigation({
         aria-label="Add account"
         title="Add account"
         onClick={() => setAdding(true)}
-        disabled={!data}
+        disabled={!data || busy}
       >
         <Plus size={20} />
       </button>
@@ -144,6 +145,7 @@ export function Navigation({
           className={page === "appearance" ? "selected" : ""}
           aria-label="Appearance settings"
           title="Settings"
+          disabled={busy}
           onClick={() => setPage("appearance")}
         >
           <Settings2 size={19} />
@@ -152,6 +154,7 @@ export function Navigation({
           className={page === "diagnostics" ? "selected" : ""}
           aria-label="Diagnostics and about"
           title="About"
+          disabled={busy}
           onClick={() => setPage("diagnostics")}
         >
           <Info size={18} />

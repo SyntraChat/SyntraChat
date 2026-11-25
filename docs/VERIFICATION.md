@@ -1,5 +1,29 @@
 # Verification record
 
+## Account workflow bug hunt — 2026-11-25
+
+The reported overlapping menus came from independent HTML details elements in each
+account row. Rows now use the existing native menu, so no inline dropdown can stay open
+over another row. Removed the duplicate dropdown markup and styles.
+
+Additional fixes preserve saved zoom values (including 110%, 67% and values outside the
+menu's preset steps) when renaming, replace an existing dialog when opening Ctrl+K,
+reject overlapping commands synchronously, and ignore older snapshot responses. The
+native action listener stays subscribed across refreshes and reads current account data.
+
+- Frontend tests: 20 passed, including regressions for the issues above and account
+  removal confirmation through native menu dispatch.
+- TypeScript checking, ESLint, Prettier and production frontend build passed.
+- Rust tests: nine unit tests and one capability regression test passed; no Rust source
+  or capability changes were required for these fixes.
+- Rebuilt and launched the Windows preview. Native smoke test opened/dismissed menus
+  on both rows, selected Edit for the second account, replaced Edit with Quick switch,
+  then dismissed it. Observed one dialog and no lingering HTML dropdowns.
+
+This is a targeted code review and regression pass, not proof that the application has
+no remaining bugs. Authenticated service behavior, Linux runtime and cross-DPI native
+behavior remain outside this check. No credentials were entered or accounts deleted.
+
 ## Compact account controls — 2026-11-25
 
 - TypeScript checking, ESLint and the production frontend build passed.

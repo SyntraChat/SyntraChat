@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fixed overlapping account-row menus by sharing the native tab menu. Preserved every
+  saved zoom value in Edit, prevented stacked quick-switch dialogs and concurrent
+  commands, and kept delayed snapshots from overwriting newer workspace state.
 - Added service icons, native account menus, color tags, zoom actions and drag-to-reorder
   tabs. Added a saved choice of the compact sidebar or a horizontal tab strip.
 - Embedded accounts in the main window with native child WebViews, rail switching,
