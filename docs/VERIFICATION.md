@@ -21,11 +21,15 @@
   contents: theme/accent/customization only, no account or session metadata.
 - Selected the existing app PNG through the native file picker, verified the
   converted preview, saved it and observed the custom icon in the rail and account row.
+- GitHub CI for implementation commit `deb6af7`: frontend, dependency audit and native
+  Windows/Linux/macOS formatting, Clippy, tests and executable builds all passed
+  ([Client checks](https://github.com/SyntraChat/SyntraChat/actions/runs/45894049193)).
+  The separate [CodeQL scan](https://github.com/SyntraChat/SyntraChat/actions/runs/45894048644)
+  also passed. Cargo audit retains the six upstream warnings in DEPENDENCY_AUDIT.md.
 
 OS login startup registration, global shortcut registration, all tray interactions,
 authenticated service isolation, and
-Linux/macOS desktop runtime remain unverified. Cross-platform build CI is checked
-separately after push. The development profile retains clearly labelled test metadata;
+Linux/macOS desktop runtime remain unverified. The development profile retains clearly labelled test metadata;
 the published 0.1.0 installer and source tag are unchanged.
 
 ## Account workflow bug hunt — 2026-11-25
