@@ -19,9 +19,11 @@
   Ctrl+K, Ctrl+, and Ctrl+Q with remote content focused. Remote IPC remains disabled.
 - Exported theme through the native Save As dialog to a test file and inspected its
   contents: theme/accent/customization only, no account or session metadata.
+- Selected the existing app PNG through the native file picker, verified the
+  converted preview, saved it and observed the custom icon in the rail and account row.
 
 OS login startup registration, global shortcut registration, all tray interactions,
-authenticated service isolation, image selection through the native picker, and
+authenticated service isolation, and
 Linux/macOS desktop runtime remain unverified. Cross-platform build CI is checked
 separately after push. The development profile retains clearly labelled test metadata;
 the published 0.1.0 installer and source tag are unchanged.
