@@ -1,9 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod commands;
+mod desktop;
+mod preferences;
 mod registry;
 mod settings;
 mod tab_controls;
 mod views;
+mod workspace_commands;
 use commands::AppState;
 use settings::Store;
 use std::sync::Mutex;
@@ -20,6 +23,17 @@ fn main() {
                 let _ = main.set_focus();
             }
         }))
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_autostart::Builder::new().build())
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _, event| {
+                    if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                        desktop::toggle(app);
+                    }
+                })
+                .build(),
+        )
         .setup(|app| {
             let path = app.path().app_config_dir()?.join("settings.json");
             let store = Store::load(path).map_err(|e| e.to_string());
@@ -47,6 +61,25 @@ fn main() {
                 .build()?;
             let resize_window = window.clone();
             window.on_window_event(move |event| {
+                if let WindowEvent::CloseRequested { api, .. } = event {
+                    let app = resize_window.app_handle();
+                    let close_to_tray = app
+                        .state::<AppState>()
+                        .store
+                        .lock()
+                        .ok()
+                        .and_then(|s| s.as_ref().ok().map(|s| s.settings.desktop.close_to_tray))
+                        .unwrap_or(false);
+                    if close_to_tray
+                        && app
+                            .state::<views::Workspace>()
+                            .tray_available
+                            .load(std::sync::atomic::Ordering::Relaxed)
+                    {
+                        api.prevent_close();
+                        let _ = resize_window.hide();
+                    }
+                }
                 if matches!(
                     event,
                     WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. }
@@ -67,11 +100,30 @@ fn main() {
                 })
                 .on_new_window(|_, _| NewWindowResponse::Deny)
                 .on_permission_request(|_, _| PermissionResponse::Deny);
-            window.add_child(shell, LogicalPosition::new(0.0, 0.0), window.inner_size()?)?;
+            let shell =
+                window.add_child(shell, LogicalPosition::new(0.0, 0.0), window.inner_size()?)?;
+            desktop::attach_shortcuts(&shell)?;
+            if let Err(error) = desktop::setup(app.handle()) {
+                tracing::warn!(%error, "Some desktop controls are unavailable");
+                *app.state::<views::Workspace>()
+                    .desktop_error
+                    .lock()
+                    .map_err(|_| "Workspace lock failed")? = Some(error.to_string());
+            }
             Ok(())
         })
-        .on_menu_event(tab_controls::handle_menu)
+        .on_menu_event(|app, event| {
+            desktop::menu(app, &event);
+            tab_controls::handle_menu(app, event);
+        })
         .invoke_handler(tauri::generate_handler![
+            workspace_commands::save_workspace,
+            workspace_commands::remove_workspace,
+            workspace_commands::select_workspace,
+            workspace_commands::set_customization,
+            workspace_commands::export_theme,
+            workspace_commands::restore_session,
+            desktop::set_desktop,
             tab_controls::account_menu,
             tab_controls::reorder_accounts,
             tab_controls::set_account_color,

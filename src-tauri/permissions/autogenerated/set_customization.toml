@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-customization"
+description = "Enables the set_customization command without any pre-configured scope."
+commands.allow = ["set_customization"]
+
+[[permission]]
+identifier = "deny-set-customization"
+description = "Denies the set_customization command without any pre-configured scope."
+commands.deny = ["set_customization"]

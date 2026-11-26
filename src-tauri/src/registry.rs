@@ -9,6 +9,7 @@ pub struct Service {
     pub url: &'static str,
     pub category: &'static str,
     pub limitation: &'static str,
+    pub requires_url: bool,
 }
 
 pub fn services() -> Vec<Service> {
@@ -26,10 +27,17 @@ pub fn services() -> Vec<Service> {
         ("yapper", "Yapper", "https://www.yapper.website/", "Community"),
         ("wire", "Wire", "https://app.wire.com/", "Work"),
         ("threema", "Threema", "https://web.threema.com/", "Messaging"),
+        ("mattermost", "Mattermost", "https://community.mattermost.com/", "Work"),
+        ("zulip", "Zulip", "https://chat.zulip.org/", "Work"),
     ].into_iter().map(|(id, name, url, category)| Service {
         id, name, url, category,
         limitation: "Experimental: login and messaging unverified; media, downloads and cross-origin sign-in disabled.",
+        requires_url: server_service(id),
     }).collect()
+}
+
+pub fn server_service(id: &str) -> bool {
+    matches!(id, "mattermost" | "zulip")
 }
 
 pub fn validate_url(raw: &str) -> Result<Url, String> {

@@ -1,6 +1,8 @@
 import { Navigation, type Page } from "./components/Navigation";
 import { AccountsOverview } from "./components/AccountsOverview";
-import { Appearance, Diagnostics } from "./components/Preferences";
+import { Diagnostics } from "./components/Preferences";
+import { SettingsPage } from "./components/SettingsPage";
+import { applyCustomization, workspaceAccounts } from "./workspaces";
 import { AccountForm, Modal, Palette } from "./components/AccountDialogs";
 import {
   useCallback,
@@ -24,8 +26,10 @@ export function App() {
   const [editing, setEditing] = useState<Account>();
   const [removing, setRemoving] = useState<Account>();
   const [palette, setPalette] = useState(false);
+  const [slowLoad, setSlowLoad] = useState(false);
   const snapshotRequest = useRef(0);
   const operationPending = useRef(false);
+  const initialized = useRef(false);
   const refresh = useCallback(async () => {
     const request = ++snapshotRequest.current;
     const next = await api.snapshot();
@@ -65,7 +69,24 @@ export function App() {
   };
 
   useEffect(() => {
-    void refresh().catch((e) => setError(String(e)));
+    if (initialized.current) return;
+    initialized.current = true;
+    operationPending.current = true;
+    setBusy(true);
+    void (async () => {
+      try {
+        await api.restore();
+      } catch (e) {
+        setError(String(e));
+      }
+      try {
+        await refresh();
+      } catch (e) {
+        setError(String(e));
+      }
+      operationPending.current = false;
+      setBusy(false);
+    })();
   }, [refresh]);
   useEffect(() => {
     const onFocus = () => {
@@ -88,6 +109,7 @@ export function App() {
     document.documentElement.dataset.layout = data.settings.horizontalTabs
       ? "tabs"
       : "sidebar";
+    applyCustomization(data.settings);
   }, [data]);
   const onAccountAction = useEffectEvent(
     (payload: { id: string; action: string }) => {
@@ -144,6 +166,75 @@ export function App() {
       void unlisten.then((stop) => stop()).catch(() => {});
     };
   }, []);
+  const onShellAction = useEffectEvent((action: string) => {
+    if (action === "quick-switch") {
+      setAdding(false);
+      setEditing(undefined);
+      setRemoving(undefined);
+      setPalette(true);
+      return;
+    }
+    if (action === "settings") {
+      setPalette(false);
+      setAdding(false);
+      setEditing(undefined);
+      setRemoving(undefined);
+      navigate("appearance");
+      return;
+    }
+    if (!data || adding || editing || removing || palette) return;
+    const visible = workspaceAccounts(data.settings);
+    let id: string | undefined;
+    if (action.startsWith("open:")) id = visible[Number(action.slice(5))]?.id;
+    if (action === "next" || action === "previous") {
+      const index = visible.findIndex((a) => a.id === data.activeAccount);
+      id =
+        visible[
+          index < 0
+            ? action === "next"
+              ? 0
+              : visible.length - 1
+            : (index + (action === "next" ? 1 : -1) + visible.length) %
+              visible.length
+        ]?.id;
+    }
+    if (id) {
+      void run(() => openAccount(id));
+      return;
+    }
+    if (data.activeAccount && action === "reload")
+      void run(() => api.reload(data.activeAccount!));
+    if (data.activeAccount && action === "close")
+      void run(() => api.close(data.activeAccount!));
+  });
+  useEffect(() => {
+    let disposed = false;
+    const subscriptions = [
+      listen<string>(
+        "shell-action",
+        ({ payload }) => {
+          if (!disposed) onShellAction(payload);
+        },
+        { target: { kind: "Webview", label: "main" } },
+      ),
+      listen(
+        "workspace-updated",
+        () => {
+          if (!disposed) void refresh().catch((e) => setError(String(e)));
+        },
+        { target: { kind: "Webview", label: "main" } },
+      ),
+    ];
+    for (const sub of subscriptions)
+      void sub.catch((e) => {
+        if (!disposed) setError(String(e));
+      });
+    return () => {
+      disposed = true;
+      for (const sub of subscriptions)
+        void sub.then((stop) => stop()).catch(() => {});
+    };
+  }, [refresh]);
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -151,7 +242,7 @@ export function App() {
         setAdding(false);
         setEditing(undefined);
         setRemoving(undefined);
-        setPalette((p) => !p);
+        setPalette(true);
       }
       if (event.key === "Escape") {
         setPalette(false);
@@ -167,12 +258,20 @@ export function App() {
   const accounts = data?.settings.accounts ?? [];
   const active = accounts.find((account) => account.id === data?.activeAccount);
   const overlayOpen = adding || !!editing || !!removing || palette;
+  const activeLoad = active ? data?.viewStates[active.id] : undefined;
+  const blocked = activeLoad?.state === "blocked";
+  useEffect(() => {
+    setSlowLoad(false);
+    if (activeLoad?.state !== "loading") return;
+    const timer = window.setTimeout(() => setSlowLoad(true), 20000);
+    return () => window.clearTimeout(timer);
+  }, [active?.id, activeLoad?.state]);
   useEffect(() => {
     if (!data) return;
     void api
-      .contentVisible(!overlayOpen && !error)
+      .contentVisible(!overlayOpen && !error && !blocked)
       .catch((e) => setError(String(e)));
-  }, [overlayOpen, error, data?.activeAccount]);
+  }, [overlayOpen, error, data?.activeAccount, blocked]);
   return (
     <div className="app-shell">
       <Navigation
@@ -189,6 +288,27 @@ export function App() {
       <main>
         <header>
           <span className="app-title">SyntraChat</span>
+          {data && (
+            <select
+              className="workspace-switch"
+              aria-label="Current workspace"
+              disabled={busy}
+              value={data.settings.activeWorkspace ?? ""}
+              onChange={(e) =>
+                void run(async () => {
+                  await api.workspace(e.target.value || null);
+                  setPage("accounts");
+                })
+              }
+            >
+              <option value="">All accounts</option>
+              {data.settings.workspaces.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          )}
           <span className="page-name">
             {active
               ? active.name
@@ -200,6 +320,17 @@ export function App() {
           </span>
           {active && (
             <div className="active-actions">
+              {activeLoad && (
+                <span className="load-state" role="status">
+                  {activeLoad.state === "loading"
+                    ? slowLoad
+                      ? "Still loading…"
+                      : "Loading…"
+                    : activeLoad.state === "blocked"
+                      ? "Redirect blocked"
+                      : "Page loaded"}
+                </span>
+              )}
               <button
                 aria-label="Active account options"
                 title="Account options"
@@ -245,6 +376,21 @@ export function App() {
             </div>
           )}
           {!data && !error && <p role="status">Loading your workspace…</p>}
+          {active && blocked && (
+            <section className="connection-state" role="status">
+              <h1>Sign-in redirect blocked</h1>
+              <p>{activeLoad?.message}</p>
+              <button
+                disabled={busy}
+                onClick={() => void run(() => api.reload(active.id))}
+              >
+                Reload account
+              </button>
+              <button disabled={busy} onClick={() => navigate("accounts")}>
+                Back to accounts
+              </button>
+            </section>
+          )}
           {page === "accounts" && !active && (
             <AccountsOverview
               data={data}
@@ -256,7 +402,7 @@ export function App() {
             />
           )}
           {page === "appearance" && data && (
-            <Appearance data={data} busy={busy} run={run} />
+            <SettingsPage data={data} busy={busy} run={run} />
           )}
           {page === "diagnostics" && data && (
             <Diagnostics data={data} busy={busy} run={run} refresh={refresh} />
@@ -276,10 +422,10 @@ export function App() {
             data={data}
             account={editing}
             busy={busy}
-            onSave={(service, name, url, zoom) =>
+            onSave={(service, name, url, zoom, details) =>
               void run(async () => {
-                if (editing) await api.edit(editing.id, name, zoom);
-                else await api.add(service, name, url);
+                if (editing) await api.edit(editing.id, name, zoom, details);
+                else await api.add(service, name, url, details);
                 setAdding(false);
                 setEditing(undefined);
               })

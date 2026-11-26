@@ -9,5 +9,7 @@
     "allow-show-home", "allow-set-content-visible",
     "allow-account-menu", "allow-reorder-accounts", "allow-set-account-color", "allow-set-tab-layout",
     "core:event:allow-listen", "core:event:allow-unlisten"
+    , "allow-save-workspace", "allow-remove-workspace", "allow-select-workspace", "allow-set-customization",
+    "allow-export-theme", "allow-restore-session", "allow-set-desktop"
   ]
 }

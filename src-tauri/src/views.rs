@@ -1,11 +1,43 @@
-use std::sync::Mutex;
-use tauri::{AppHandle, LogicalPosition, LogicalSize, Manager, Rect, Window};
+use std::{
+    collections::HashMap,
+    sync::{Mutex, atomic::AtomicBool},
+};
+use tauri::{AppHandle, Emitter, EventTarget, LogicalPosition, LogicalSize, Manager, Rect, Window};
 use uuid::Uuid;
 
 #[derive(Default)]
 pub struct Workspace {
     pub active: Mutex<Option<Uuid>>,
     pub horizontal_tabs: Mutex<bool>,
+    pub loads: Mutex<HashMap<Uuid, LoadState>>,
+    pub tray_available: AtomicBool,
+    pub desktop_error: Mutex<Option<String>>,
+    pub restore_attempted: AtomicBool,
+}
+
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct LoadState {
+    pub state: String,
+    pub message: Option<String>,
+}
+
+pub fn load_state(app: &AppHandle, id: Uuid, state: &str, message: Option<String>) {
+    if let Ok(mut loads) = app.state::<Workspace>().loads.lock() {
+        loads.insert(
+            id,
+            LoadState {
+                state: state.into(),
+                message,
+            },
+        );
+    }
+    let _ = app.emit_to(
+        EventTarget::Webview {
+            label: "main".into(),
+        },
+        "workspace-updated",
+        (),
+    );
 }
 
 pub fn content_size(width: f64, height: f64, horizontal: bool) -> LogicalSize<f64> {

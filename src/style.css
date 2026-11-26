@@ -493,3 +493,215 @@ dialog::backdrop {
     scroll-behavior: auto !important;
   }
 }
+
+/* Customization changes shell controls, never the native content bounds. */
+body {
+  font-family: var(--font-family, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--font-size, 13px);
+}
+button,
+input,
+select {
+  border-radius: var(--radius, 5px);
+}
+main {
+  min-height: 0;
+}
+.workspace-switch {
+  width: auto;
+  max-width: 140px;
+  padding: 3px 5px;
+  border: 0;
+  font-size: 11px;
+  background: var(--panel);
+}
+.page-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.custom-account-image {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: inherit;
+  flex-shrink: 0;
+}
+.account-image-editor {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.account-image-editor img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.account-image-editor input {
+  max-width: 240px;
+  font-size: 11px;
+}
+.folder-label {
+  color: var(--muted);
+  font-size: 11px;
+  padding: 18px 0 4px;
+}
+:root[data-density="comfortable"] .account-row {
+  min-height: 76px;
+}
+.settings-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 20px;
+}
+.settings-tabs button {
+  border: 0;
+  text-transform: capitalize;
+  color: var(--muted);
+}
+.settings-tabs button[aria-pressed="true"] {
+  background: var(--panel);
+  color: var(--text);
+}
+.settings-panel form.preferences-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+.preferences-form > button {
+  align-self: flex-start;
+}
+.preference-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.check-label {
+  display: flex;
+  flex-direction: row;
+  gap: 9px;
+  align-items: center;
+}
+.check-label input {
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+.theme-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.theme-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.theme-transfer {
+  margin-top: 16px;
+}
+.file-button {
+  border: 1px solid var(--line);
+  border-radius: var(--radius, 5px);
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.file-button input {
+  max-width: 230px;
+  font-size: 11px;
+}
+.settings-panel form.workspace-form {
+  flex-wrap: wrap;
+  align-items: end;
+}
+.workspace-form label {
+  flex: 1;
+}
+.workspace-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.workspace-row strong {
+  flex: 1;
+}
+.workspace-confirm {
+  width: 100%;
+  padding: 8px 0;
+}
+.workspace-confirm button {
+  margin-right: 6px;
+}
+.shortcut-list {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 10px;
+  font-size: 12px;
+}
+.shortcut-list dd {
+  margin: 0;
+  color: var(--muted);
+}
+.load-state {
+  align-self: center;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.connection-state {
+  max-width: 580px;
+  padding-top: 24px;
+}
+.connection-state button {
+  margin-right: 8px;
+}
+dialog {
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+}
+@media (max-width: 850px) {
+  header {
+    gap: 8px;
+    padding: 0 12px;
+  }
+  .load-state {
+    display: none;
+  }
+  .workspace-switch {
+    max-width: 105px;
+  }
+}
+h1 {
+  font-size: calc(var(--font-size, 13px) + 5px);
+}
+h2,
+.app-title {
+  font-size: var(--font-size, 13px);
+}
+label,
+.page-name,
+.open-account,
+:root[data-layout="tabs"] .tab-label {
+  font-size: calc(var(--font-size, 13px) - 1px);
+}
+.account-label small,
+.preview-note,
+.form-note {
+  font-size: calc(var(--font-size, 13px) - 2px);
+}

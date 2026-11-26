@@ -11,7 +11,8 @@ SyntraChat cannot isolate against an administrator or a compromised WebView engi
 | Service navigates into trusted shell | Exact-origin HTTPS navigation allowlist; main disallows remote navigation | Engine redirects, tauri protocol and new-window tests |
 | Cross-account cookie/storage leak | OS data directory per backend UUID; no frontend-chosen paths | Two-profile cookie/IndexedDB and restart tests per OS |
 | Malicious custom URL | Rust HTTPS/no-userinfo validation, URL parser, max length | DNS changes/private network access are ordinary website behavior; no native HTTP proxy |
-| Arbitrary shell/filesystem calls | No shell/filesystem plugin or generic path command | Full capability audit before adding native integrations |
+| Arbitrary shell/filesystem calls | No shell or generic path command; theme-only export to native Save As selection; dialog dependency grants no frontend filesystem access | Full capability audit before adding native integrations |
+| Malicious theme/account image | Strict typed theme fields, bounded sizes/colors/fonts, contrast checks; images reduced to PNG and decoded/size-checked again in Rust | Native file-picker and cross-engine raster conversion checks |
 | Capture, geolocation, clipboard, notifications, downloads | Permission hook denies requests; download handler denies; no script injection | Runtime consent behavior, OS-engine-specific paths |
 | Corrupt or incompatible config | Strict serde schema, duplicate-ID/range checks; fail visibly without reset; atomic tempfile replacement | Recovery/backup UX and future migrations |
 | Secrets in diagnostics | No URL/token logging, no telemetry; metadata only | Redaction tests when logging/voice expands |

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-desktop"
+description = "Enables the set_desktop command without any pre-configured scope."
+commands.allow = ["set_desktop"]
+
+[[permission]]
+identifier = "deny-set-desktop"
+description = "Denies the set_desktop command without any pre-configured scope."
+commands.deny = ["set_desktop"]

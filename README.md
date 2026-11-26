@@ -4,9 +4,9 @@ An independently authored multi-messenger workspace using **Tauri 2, Rust and st
 TypeScript/React**. Windows and Linux are the primary targets. No Electron runtime,
 bundled Chromium or background HTTP server.
 
-**0.1.0 foundation preview — not a stable release.** The Windows application builds and
+**0.2.0 development preview — not a stable release.** The Windows application builds and
 has been smoke-tested. Accounts open as native child WebViews in the main window. Logged-in
-messaging, persistent login isolation, Linux runtime behavior, voice, media, tray,
+messaging, persistent login isolation, Linux runtime behavior, voice, media,
 notifications and installation/update lifecycle are not certified.
 
 Implemented: validated service/custom HTTPS accounts, UUID profiles, embedded account tabs, lazy opening,
@@ -14,6 +14,16 @@ focus/reload/close, rename/zoom, removal with confirmation (retains session), at
 metadata persistence, five themes, custom accent, account search, Ctrl+K quick switcher,
 diagnostics and a real Quit action. Remote pages receive no privileged capabilities.
 Media and downloads are denied. Cross-origin sign-in and popups are blocked.
+
+The 0.2 development batch adds workspaces, folder groups, pinned accounts, custom PNG
+account images, font/spacing/color controls, and validated theme import/export. Desktop
+settings include a tray, optional close-to-tray, launch at login, a configurable global
+show/hide shortcut and session restoration. These options default off. Mattermost and
+Zulip accept your server's HTTPS URL; all service presets remain experimental.
+
+Settings migrate from schema 1 to 2 when saved. Existing account IDs and session stores
+are retained. Older 0.1 clients cannot read schema 2; back up settings before downgrading.
+The published 0.1.0 installer remains pinned to its original source revision.
 
 ```powershell
 npm ci

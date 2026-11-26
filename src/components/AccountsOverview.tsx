@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowRight, MoreHorizontal, Plus, Search } from "lucide-react";
-import { ServiceIcon } from "./ServiceIcon";
+import { AccountIcon } from "./AccountIcon";
+import { workspaceAccounts } from "../workspaces";
 import { type Snapshot } from "../api";
 
 type Props = {
@@ -20,10 +21,13 @@ export function AccountsOverview({
   openAccount,
 }: Props) {
   const [query, setQuery] = useState("");
-  const accounts = data?.settings.accounts ?? [];
+  const accounts = data ? workspaceAccounts(data.settings) : [];
   const filtered = accounts.filter((a) =>
-    `${a.name} ${a.serviceId}`.toLowerCase().includes(query.toLowerCase()),
+    `${a.name} ${a.serviceId} ${a.details.folder}`
+      .toLowerCase()
+      .includes(query.toLowerCase()),
   );
+  filtered.sort((a, b) => a.details.folder.localeCompare(b.details.folder));
   return (
     <>
       <div className="account-toolbar">
@@ -45,45 +49,60 @@ export function AccountsOverview({
         </button>
       </div>
       <div className="account-list">
-        {filtered.map((account) => {
+        {filtered.map((account, index) => {
           const open = data?.openAccounts.includes(account.id);
           return (
-            <article className="account-row" key={account.id}>
-              <span
-                className="account-icon"
-                aria-hidden="true"
-                style={account.color ? { color: account.color } : undefined}
-              >
-                <ServiceIcon serviceId={account.serviceId} />
-              </span>
-              <div className="account-label">
-                <h2>{account.name}</h2>
-                <small>
-                  {account.serviceId === "custom"
-                    ? new URL(account.url).hostname
-                    : data?.services.find(
-                        (service) => service.id === account.serviceId,
-                      )?.name}
-                  {open ? " · Loaded" : ""}
-                </small>
-              </div>
-              <button
-                className="open-account"
-                disabled={busy}
-                onClick={() => void run(() => openAccount(account.id))}
-              >
-                Open account <ArrowRight size={14} />
-              </button>
-              <button
-                className="account-options"
-                aria-label={`Options for ${account.name}`}
-                title="Account options"
-                disabled={busy}
-                onClick={() => showMenu(account.id)}
-              >
-                <MoreHorizontal size={18} />
-              </button>
-            </article>
+            <div key={account.id}>
+              {account.details.folder &&
+                (index === 0 ||
+                  filtered[index - 1]?.details.folder !==
+                    account.details.folder) && (
+                  <div className="folder-label">{account.details.folder}</div>
+                )}
+              <article className="account-row">
+                <span
+                  className="account-icon"
+                  aria-hidden="true"
+                  style={account.color ? { color: account.color } : undefined}
+                >
+                  <AccountIcon account={account} />
+                </span>
+                <div className="account-label">
+                  <h2>
+                    {account.details.pinned && (
+                      <span title="Pinned" aria-hidden="true">
+                        ◆{" "}
+                      </span>
+                    )}
+                    {account.name}
+                  </h2>
+                  <small>
+                    {account.serviceId === "custom"
+                      ? new URL(account.url).hostname
+                      : data?.services.find(
+                          (service) => service.id === account.serviceId,
+                        )?.name}
+                    {open ? " · Loaded" : ""}
+                  </small>
+                </div>
+                <button
+                  className="open-account"
+                  disabled={busy}
+                  onClick={() => void run(() => openAccount(account.id))}
+                >
+                  Open account <ArrowRight size={14} />
+                </button>
+                <button
+                  className="account-options"
+                  aria-label={`Options for ${account.name}`}
+                  title="Account options"
+                  disabled={busy}
+                  onClick={() => showMenu(account.id)}
+                >
+                  <MoreHorizontal size={18} />
+                </button>
+              </article>
+            </div>
           );
         })}
       </div>

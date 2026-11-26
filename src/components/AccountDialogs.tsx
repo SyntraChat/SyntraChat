@@ -7,7 +7,8 @@ import {
   Settings2,
   X,
 } from "lucide-react";
-import type { Account, Snapshot } from "../api";
+import type { Account, AccountDetails, Snapshot } from "../api";
+import { accountImage } from "../workspaces";
 import { zoomSteps } from "../tabs";
 
 export function AccountForm({
@@ -19,9 +20,25 @@ export function AccountForm({
   data?: Snapshot;
   account?: Account;
   busy: boolean;
-  onSave: (service: string, name: string, url: string, zoom: number) => void;
+  onSave: (
+    service: string,
+    name: string,
+    url: string,
+    zoom: number,
+    details: AccountDetails,
+  ) => void;
 }) {
   const [service, setService] = useState(account?.serviceId ?? "discord");
+  const [details, setDetails] = useState<AccountDetails>(
+    account?.details ?? {
+      workspaceId: data?.settings.activeWorkspace ?? null,
+      folder: "",
+      pinned: false,
+      image: null,
+    },
+  );
+  const [imageError, setImageError] = useState("");
+  const [converting, setConverting] = useState(false);
   return (
     <form
       className="account-form"
@@ -33,6 +50,7 @@ export function AccountForm({
           String(form.get("name")),
           String(form.get("url") ?? ""),
           Number(form.get("zoom") ?? 1),
+          details,
         );
       }}
     >
@@ -59,18 +77,91 @@ export function AccountForm({
           maxLength={80}
         />
       </label>
-      {service === "custom" && !account && (
+      {(service === "custom" ||
+        data?.services.find((s) => s.id === service)?.requiresUrl) &&
+        !account && (
+          <label>
+            Website URL
+            <input
+              name="url"
+              type="url"
+              placeholder="https://example.com"
+              required
+              pattern="https://.*"
+              defaultValue={
+                data?.services.find((s) => s.id === service)?.url ?? ""
+              }
+              key={service}
+            />
+          </label>
+        )}
+      <div className="preference-grid">
         <label>
-          Website URL
+          Workspace
+          <select
+            value={details.workspaceId ?? ""}
+            onChange={(e) =>
+              setDetails({ ...details, workspaceId: e.target.value || null })
+            }
+          >
+            <option value="">Unassigned</option>
+            {data?.settings.workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Folder
           <input
-            name="url"
-            type="url"
-            placeholder="https://example.com"
-            required
-            pattern="https://.*"
+            value={details.folder}
+            maxLength={80}
+            placeholder="e.g. Friends"
+            onChange={(e) => setDetails({ ...details, folder: e.target.value })}
           />
         </label>
-      )}
+      </div>
+      <label className="check-label">
+        <input
+          type="checkbox"
+          checked={details.pinned}
+          onChange={(e) => setDetails({ ...details, pinned: e.target.checked })}
+        />
+        Pin this account
+      </label>
+      <div className="account-image-editor">
+        {details.image && <img src={details.image} alt="Account preview" />}
+        <label>
+          Account image
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            disabled={converting}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setConverting(true);
+              setImageError("");
+              void accountImage(file)
+                .then((image) =>
+                  setDetails((current) => ({ ...current, image })),
+                )
+                .catch((e) => setImageError(String(e)))
+                .finally(() => setConverting(false));
+            }}
+          />
+        </label>
+        {details.image && (
+          <button
+            type="button"
+            onClick={() => setDetails({ ...details, image: null })}
+          >
+            Use service icon
+          </button>
+        )}
+      </div>
+      {imageError && <p role="alert">{imageError}</p>}
       {account && (
         <label>
           Zoom
@@ -90,7 +181,11 @@ export function AccountForm({
         same-origin navigation is allowed. Sign-in redirects may be blocked.
         Media and downloads are disabled in this preview.
       </p>
-      <button className="primary" disabled={busy || !data} type="submit">
+      <button
+        className="primary"
+        disabled={busy || !data || converting}
+        type="submit"
+      >
         {account ? "Save account" : "Create account"}
       </button>
     </form>
@@ -189,7 +284,7 @@ export function Palette({
         </button>
       )}
       <small>
-        <Command size={12} /> Ctrl+K to toggle · Escape to close
+        <Command size={12} /> Ctrl+K to open · Escape to close
       </small>
     </div>
   );

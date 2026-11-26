@@ -89,7 +89,7 @@ export function Diagnostics({
       </p>
       <dl className="diagnostics">
         <dt>Version</dt>
-        <dd>{data.version} · foundation preview</dd>
+        <dd>{data.version} · development preview</dd>
         <dt>Operating system</dt>
         <dd>{data.os}</dd>
         <dt>WebView family</dt>

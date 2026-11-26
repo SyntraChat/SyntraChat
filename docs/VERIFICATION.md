@@ -1,5 +1,31 @@
 # Verification record
 
+## 0.2 development batch — 2026-11-26
+
+- Frontend: 29 tests pass, including workspace filtering/removal confirmation,
+  pin-aware native shortcut dispatch, theme customization/import rejection,
+  explicit desktop Save, partial session restore, blocked navigation and local
+  raster image conversion. TypeScript, ESLint and Prettier checks pass.
+- Rust: 14 unit tests plus one capability regression test pass. Coverage includes
+  schema 1 migration without eager overwrite, workspace removal retaining account
+  and session IDs, invalid references/themes/chords, bounded PNG decoding and
+  self-hosted Mattermost/Zulip URLs. Formatting and Clippy with warnings denied pass.
+- Windows native preview: existing four accounts survived migration; created a
+  labelled preview workspace and local Mattermost test entry with folder/pin;
+  confirmed filtering, same-window public service loading and restoring open views
+  and the active workspace/tab after restart. No credentials entered or messages sent.
+- Native shortcuts initially failed when WebView2 consumed accelerator messages.
+  Added a Windows controller accelerator handler for app chords; verified Ctrl+1,
+  Ctrl+K, Ctrl+, and Ctrl+Q with remote content focused. Remote IPC remains disabled.
+- Exported theme through the native Save As dialog to a test file and inspected its
+  contents: theme/accent/customization only, no account or session metadata.
+
+OS login startup registration, global shortcut registration, all tray interactions,
+authenticated service isolation, image selection through the native picker, and
+Linux/macOS desktop runtime remain unverified. Cross-platform build CI is checked
+separately after push. The development profile retains clearly labelled test metadata;
+the published 0.1.0 installer and source tag are unchanged.
+
 ## Account workflow bug hunt — 2026-11-25
 
 The reported overlapping menus came from independent HTML details elements in each

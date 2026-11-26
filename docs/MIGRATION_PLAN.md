@@ -23,10 +23,12 @@ This is a rewrite with independent history. Never import Electron sessions or to
 9. **Quality/stable:** all requested acceptance criteria and authenticated service tests pass;
    documentation reflects evidence. Unsupported Vencord/media capabilities remain explicit.
 
-Current scope: checkpoint 1–2 and installer verification foundation. Later milestones are
-tracked requirements, not implemented features. No stable release is authorized by a green
+Current scope: foundation preview 0.1.0 released, with a 0.2 development batch covering
+workspace organization, customization and initial native desktop integrations. Later milestones
+include tracked requirements. No stable release is authorized by a green
 compile alone. See FEATURE_MATRIX.md and VERIFICATION.md for actual evidence.
 
 Progress within milestone 3: native child WebViews, account switching, same-window
 navigation to local settings, toolbar reload/close and resizing are implemented. Multiple
-workspace grouping, reorder, authenticated isolation/SSO and Linux runtime tests remain.
+workspace grouping, reorder, pins and folder metadata are implemented. Authenticated
+isolation/SSO, native notifications, voice, media consent and Linux runtime tests remain.

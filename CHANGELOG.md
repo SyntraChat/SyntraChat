@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### 0.2.0 development batch
+
+- Added workspaces, folder groups, pinned accounts and validated custom account images.
+- Added font, size, spacing, corner and color controls, contrast validation, theme
+  import and native Save As theme export.
+- Added tray Show/Quit, opt-in close-to-tray, launch at login, configurable global
+  show/hide shortcut, session restoration and native application shortcuts.
+- Added native loading and blocked-origin states, plus Mattermost and Zulip server presets.
+- Migrated settings schema 1 to 2 while preserving account IDs and profile stores.
+
+## 0.1.0 — foundation preview
+
 - Replaced the app and favicon artwork with the supplied chat.png, including generated
   Windows, Linux and macOS icon formats.
 - Fixed overlapping account-row menus by sharing the native tab menu. Preserved every
@@ -20,4 +32,5 @@
   quick switcher, diagnostics, tests and Windows/Linux build workflows.
 - Explicitly gated unverified service, media, voice, installer and update capabilities.
 
+0.1.0 packages were published from a pinned source revision in the installer repository.
 No stable version has been released.

@@ -20,7 +20,9 @@ WKWebView does not support data_directory. Runtime login isolation remains unver
 | Accounts | UUIDs, labels, service URL/origin, zoom; Rust validates all input |
 | Settings | Versioned serde schema; validate on load; tempfile + sync + atomic persist; fail visibly on corruption |
 | Views | Lazy child-view create/focus/reload/close; active tab selection; native bounds/DPI updates; no remote capabilities |
-| Workspaces | Planned references to account IDs; never duplicate storage |
+| Workspaces | Metadata references on existing accounts; folder/pinned/image details; removal unassigns accounts without deleting profiles |
+| Desktop | Native tray/menu, opt-in startup and global shortcut plugins; session restore uses existing UUIDs and lazy view creation |
+| Customization | Validated schema, allowlisted fonts and bounded sizes; color contrast checks; versioned theme-only JSON import/export |
 | Notifications | Planned documented APIs only; no scraping or badge fabrication |
 | Voice | Planned async native protocol/audio tasks; no credentials in frontend state |
 | Updates | Planned signed manifest verification shared by contract with installer |
@@ -33,8 +35,9 @@ Native account menus emit actions only to the main WebView. Its event permission
 listening/unlistening, with no event-emission grant. Reordering requires a complete,
 duplicate-free permutation of saved account UUIDs. Optional color and layout fields
 default safely when older settings are loaded; their values pass Rust validation.
-There is no filesystem, shell, arbitrary eval, HTTP proxy, or arbitrary-window creation
-command. Main cannot navigate to remote content. Remote pages have no capabilities,
+Theme export writes only to the path selected in a native Save As dialog; it exports no
+account or session metadata. There is no general filesystem, shell, arbitrary eval,
+HTTP proxy, or arbitrary-window creation command. Main cannot navigate to remote content. Remote pages have no capabilities,
 even when they navigate or create subframes. IPC accepts account IDs, not disk paths.
 
 Avoid SQLite until metadata query complexity warrants it. React local state suffices

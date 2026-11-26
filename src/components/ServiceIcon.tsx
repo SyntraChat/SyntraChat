@@ -1,4 +1,4 @@
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Hash, MessagesSquare } from "lucide-react";
 
 const icons: Record<string, string> = {
   discord: "discord",
@@ -17,6 +17,9 @@ const icons: Record<string, string> = {
 };
 
 export function ServiceIcon({ serviceId }: { serviceId: string }) {
+  if (serviceId === "mattermost") return <Hash size={20} aria-hidden="true" />;
+  if (serviceId === "zulip")
+    return <MessagesSquare size={20} aria-hidden="true" />;
   const icon = icons[serviceId];
   return icon ? (
     <span

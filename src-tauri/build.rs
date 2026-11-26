@@ -16,6 +16,13 @@ fn main() {
             "reorder_accounts",
             "set_account_color",
             "set_tab_layout",
+            "save_workspace",
+            "remove_workspace",
+            "select_workspace",
+            "set_customization",
+            "export_theme",
+            "restore_session",
+            "set_desktop",
         ]),
     ))
     .expect("Tauri build configuration failed");

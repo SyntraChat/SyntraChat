@@ -33,11 +33,18 @@ vi.mock("./api", () => ({
     color: vi.fn(),
     layout: vi.fn(),
     accountMenu: vi.fn(),
+    saveWorkspace: vi.fn(),
+    removeWorkspace: vi.fn(),
+    workspace: vi.fn(),
+    customize: vi.fn(),
+    desktop: vi.fn(),
+    exportTheme: vi.fn(),
+    restore: vi.fn(),
   },
 }));
 const initial: Snapshot = {
   settings: {
-    version: 1,
+    version: 2,
     accounts: [
       {
         id: "account-1",
@@ -46,11 +53,35 @@ const initial: Snapshot = {
         url: "https://discord.com/app",
         zoom: 1,
         color: null,
+        details: { workspaceId: null, folder: "", pinned: false, image: null },
       },
     ],
     theme: "dark",
     accent: "#a78bfa",
     horizontalTabs: false,
+    workspaces: [],
+    activeWorkspace: null,
+    customization: {
+      font: "system",
+      fontSize: 13,
+      radius: 5,
+      comfortable: false,
+      colors: false,
+      background: "#141419",
+      panel: "#1a1a21",
+      text: "#eeeef3",
+      muted: "#a1a1b1",
+    },
+    desktop: {
+      closeToTray: false,
+      launchAtLogin: false,
+      startHidden: false,
+      restoreSession: false,
+      globalShortcut: false,
+      toggleShortcut: "CommandOrControl+Shift+Space",
+    },
+    session: [],
+    lastActive: null,
   },
   services: [
     {
@@ -66,6 +97,9 @@ const initial: Snapshot = {
   version: "0.1.0",
   os: "windows",
   engine: "WebView2",
+  viewStates: {},
+  trayAvailable: true,
+  desktopError: null,
 };
 beforeEach(() => {
   vi.resetAllMocks();
@@ -83,6 +117,166 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("workspace", () => {
+  it("filters a workspace and sends workspace selection through the native boundary", async () => {
+    const data = structuredClone(initial);
+    data.settings.workspaces = [{ id: "work", name: "Work" }];
+    data.settings.activeWorkspace = "work";
+    data.settings.accounts[0]!.details.workspaceId = "work";
+    data.settings.accounts.push({
+      ...structuredClone(data.settings.accounts[0]!),
+      id: "other",
+      name: "Other account",
+      details: { workspaceId: null, folder: "", pinned: false, image: null },
+    });
+    vi.mocked(api.snapshot).mockResolvedValue(data);
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Discord Personal" });
+    expect(
+      screen.queryByRole("button", { name: "Open Other account" }),
+    ).toBeNull();
+    await user.selectOptions(screen.getByLabelText("Current workspace"), "");
+    await waitFor(() => expect(api.workspace).toHaveBeenCalledWith(null));
+  });
+  it("creates a workspace and confirms removal while retaining its accounts", async () => {
+    const data = structuredClone(initial);
+    data.settings.workspaces = [{ id: "work", name: "Work" }];
+    vi.mocked(api.snapshot).mockResolvedValue(data);
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Discord Personal" });
+    await user.click(
+      screen.getByRole("button", { name: "Appearance settings" }),
+    );
+    await user.click(await screen.findByRole("button", { name: "workspaces" }));
+    await user.type(screen.getByLabelText("Workspace name"), "Gaming");
+    await user.click(screen.getByRole("button", { name: "Create workspace" }));
+    await waitFor(() =>
+      expect(api.saveWorkspace).toHaveBeenCalledWith(null, "Gaming"),
+    );
+    await user.click(screen.getByRole("button", { name: "Remove" }));
+    expect(api.removeWorkspace).not.toHaveBeenCalled();
+    await user.click(
+      screen.getByRole("button", { name: "Remove workspace, keep accounts" }),
+    );
+    await waitFor(() =>
+      expect(api.removeWorkspace).toHaveBeenCalledWith("work"),
+    );
+  });
+  it("saves theme typography and rejects foreign theme imports", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Discord Personal" });
+    await user.click(
+      screen.getByRole("button", { name: "Appearance settings" }),
+    );
+    await user.selectOptions(await screen.findByLabelText("Text size"), "16");
+    await user.selectOptions(screen.getByLabelText("App font"), "mono");
+    await user.click(
+      screen.getByRole("button", { name: "Save customization" }),
+    );
+    await waitFor(() =>
+      expect(api.customize).toHaveBeenCalledWith(
+        expect.objectContaining({ fontSize: 16, font: "mono" }),
+      ),
+    );
+    vi.mocked(api.customize).mockClear();
+    const file = new File(['{"format":"foreign"}'], "theme.json", {
+      type: "application/json",
+    });
+    Object.defineProperty(file, "text", {
+      value: async () => '{"format":"foreign"}',
+    });
+    await user.upload(screen.getByLabelText("Import theme"), file);
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain(
+        "not a SyntraChat theme pack",
+      ),
+    );
+    expect(api.customize).not.toHaveBeenCalled();
+  });
+  it("saves desktop preferences only after an explicit save", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Discord Personal" });
+    await user.click(
+      screen.getByRole("button", { name: "Appearance settings" }),
+    );
+    await user.click(await screen.findByRole("button", { name: "desktop" }));
+    await user.click(
+      screen.getByLabelText("Restore my open accounts on startup"),
+    );
+    expect(api.desktop).not.toHaveBeenCalled();
+    await user.click(
+      screen.getByRole("button", { name: "Save desktop preferences" }),
+    );
+    await waitFor(() =>
+      expect(api.desktop).toHaveBeenCalledWith(
+        expect.objectContaining({ restoreSession: true, launchAtLogin: false }),
+      ),
+    );
+  });
+  it("uses native app shortcuts to open pinned accounts while preserving full order", async () => {
+    const data = structuredClone(initial);
+    const second = structuredClone(data.settings.accounts[0]!);
+    second.id = "second";
+    second.name = "Pinned";
+    second.details.pinned = true;
+    data.settings.accounts.push(second);
+    vi.mocked(api.snapshot).mockResolvedValue(data);
+    render(<App />);
+    await screen.findByRole("heading", { name: "Pinned" });
+    await act(async () =>
+      vi
+        .mocked(listen)
+        .mock.calls.find(([name]) => name === "shell-action")![1]({
+          event: "shell-action",
+          id: 1,
+          payload: "open:0",
+        }),
+    );
+    await waitFor(() => expect(api.open).toHaveBeenCalledWith("second"));
+  });
+  it("keeps accounts available when a saved session only partially restores", async () => {
+    vi.mocked(api.restore).mockRejectedValue(
+      "Some saved tabs could not be restored",
+    );
+    render(<App />);
+    await screen.findByRole("heading", { name: "Discord Personal" });
+    expect(screen.getByRole("alert").textContent).toContain(
+      "could not be restored",
+    );
+    expect(api.restore).toHaveBeenCalledTimes(1);
+  });
+  it("shows blocked redirects and hides remote content until a new load starts", async () => {
+    const data = structuredClone(initial);
+    data.activeAccount = "account-1";
+    data.viewStates["account-1"] = {
+      state: "blocked",
+      message: "A different sign-in origin was requested.",
+    };
+    vi.mocked(api.snapshot).mockResolvedValue(data);
+    render(<App />);
+    await screen.findByRole("heading", { name: "Sign-in redirect blocked" });
+    await waitFor(() =>
+      expect(api.contentVisible).toHaveBeenLastCalledWith(false),
+    );
+    const loaded = structuredClone(data);
+    loaded.viewStates["account-1"] = { state: "loading", message: null };
+    vi.mocked(api.snapshot).mockResolvedValue(loaded);
+    await act(async () =>
+      vi
+        .mocked(listen)
+        .mock.calls.find(([name]) => name === "workspace-updated")![1]({
+          event: "workspace-updated",
+          id: 1,
+          payload: null,
+        }),
+    );
+    await waitFor(() =>
+      expect(api.contentVisible).toHaveBeenLastCalledWith(true),
+    );
+  });
   it("creates a custom account through the native boundary", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -113,6 +307,7 @@ describe("workspace", () => {
         "custom",
         "Private chat",
         "https://example.com/",
+        expect.objectContaining({ folder: "", pinned: false }),
       ),
     );
   });
@@ -124,7 +319,7 @@ describe("workspace", () => {
     await act(async () =>
       vi
         .mocked(listen)
-        .mock.calls.at(-1)![1]({
+        .mock.calls.find(([name]) => name === "account-action")![1]({
           event: "account-action",
           id: 1,
           payload: { id: "account-1", action: "remove" },
@@ -216,7 +411,9 @@ describe("workspace", () => {
     await waitFor(() =>
       expect(api.accountMenu).toHaveBeenCalledWith("account-1"),
     );
-    const handler = vi.mocked(listen).mock.calls.at(-1)![1];
+    const handler = vi
+      .mocked(listen)
+      .mock.calls.find(([name]) => name === "account-action")![1];
     await act(async () =>
       handler({
         event: "account-action",
@@ -296,7 +493,7 @@ describe("workspace", () => {
       await act(async () =>
         vi
           .mocked(listen)
-          .mock.calls.at(-1)![1]({
+          .mock.calls.find(([name]) => name === "account-action")![1]({
             event: "account-action",
             id: 1,
             payload: { id: "account-1", action: "edit" },
@@ -309,7 +506,12 @@ describe("workspace", () => {
       await user.type(screen.getByLabelText("Account label"), "Renamed");
       await user.click(screen.getByRole("button", { name: "Save account" }));
       await waitFor(() =>
-        expect(api.edit).toHaveBeenCalledWith("account-1", "Renamed", zoom),
+        expect(api.edit).toHaveBeenCalledWith(
+          "account-1",
+          "Renamed",
+          zoom,
+          data.settings.accounts[0]!.details,
+        ),
       );
     },
   );
@@ -346,7 +548,7 @@ describe("workspace", () => {
     expect(
       screen.queryByRole("heading", { name: "Discord Personal" }),
     ).toBeNull();
-    expect(listen).toHaveBeenCalledTimes(1);
+    expect(listen).toHaveBeenCalledTimes(3);
     await act(async () =>
       vi.mocked(listen).mock.calls[0]![1]({
         event: "account-action",
