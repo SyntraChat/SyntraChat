@@ -4,7 +4,7 @@ An independently authored multi-messenger workspace using **Tauri 2, Rust and st
 TypeScript/React**. Windows and Linux are the primary targets. No Electron runtime,
 bundled Chromium or background HTTP server.
 
-**0.2.0 development preview — not a stable release.** The Windows application builds and
+**0.2.0 preview — not a stable release.** The Windows application builds and
 has been smoke-tested. Accounts open as native child WebViews in the main window. Logged-in
 messaging, persistent login isolation, Linux runtime behavior, voice, media,
 notifications and installation/update lifecycle are not certified.
@@ -15,7 +15,7 @@ metadata persistence, five themes, custom accent, account search, Ctrl+K quick s
 diagnostics and a real Quit action. Remote pages receive no privileged capabilities.
 Media and downloads are denied. Cross-origin sign-in and popups are blocked.
 
-The 0.2 development batch adds workspaces, folder groups, pinned accounts, custom PNG
+The 0.2 release adds workspaces, folder groups, pinned accounts, custom PNG
 account images, font/spacing/color controls, and validated theme import/export. Desktop
 settings include a tray, optional close-to-tray, launch at login, a configurable global
 show/hide shortcut and session restoration. These options default off. Mattermost and
@@ -36,7 +36,7 @@ prerequisites. [Development](docs/DEVELOPMENT.md) · [Building](docs/BUILDING.md
 [Reference audit](docs/YBOCHAT_FEATURE_AUDIT.md) · [Architecture](docs/ARCHITECTURE.md) ·
 [Threat model](docs/THREAT_MODEL.md) · [Milestones](docs/MIGRATION_PLAN.md).
 
-0.1.0 preview packages and PowerShell/shell installers are managed by the
+Preview packages and PowerShell/shell installers are managed by the
 [installer repository](https://github.com/SyntraChat/SyntraChat-Installer/releases).
 The macOS package requires macOS 14+ and uses per-account WebKit data stores.
 

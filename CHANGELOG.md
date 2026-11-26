@@ -1,8 +1,6 @@
 # Changelog
 
-## Unreleased
-
-### 0.2.0 development batch
+## 0.2.0 — 2026-11-26 preview
 
 - Added workspaces, folder groups, pinned accounts and validated custom account images.
 - Added font, size, spacing, corner and color controls, contrast validation, theme
